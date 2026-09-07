@@ -7,7 +7,7 @@ Status: implementation in progress. The 2026-09-07 continuation completed the lo
 
 Complete the extracted teams component so applications can use personal and shared workspaces with consistent membership and invitation rules. Prepare it for an independent CLIPIN open-source release.
 
-The founder confirmed that Feedtwin was never migrated because convex-teams was unfinished. Feedtwin remains the source application for comparison. Pedalclass is a prospective consumer. Its pricing and wider product strategy continue in a separate planning session.
+The founder confirmed Feedtwin and Pedalclass as the first target consumers. Neither adoption is complete. Feedtwin provides the migration case. Pedalclass provides the private-content adoption case. See [Consumer and permission architecture decisions](#consumer-and-permission-architecture-decisions-2026-09-07). Pedalclass pricing and wider product strategy remain separate.
 
 The review inspected local source files. It did not run the component, install dependencies, test a deployment, or verify registry and remote repository ownership. Recheck the source before implementation.
 
@@ -353,3 +353,49 @@ Shared and personal slug allocation use at most five indexed candidate checks. C
 Validation: 29 component and host tests pass. Type checks, lint, documentation links, production build, package checks, and the registry-only packed consumer check pass. Local backend proofs pass for the final-seat race, concurrent personal bootstrap, duplicate grants, `Number.MAX_SAFE_INTEGER` seat policy, and concurrent same-name creation. Generated component declarations were regenerated with the Convex CLI. Existing local component records accepted the optional schema field without a destructive reset.
 
 Next: implement authorized stable-identifier imports and an isolated Feedtwin migration fixture. The actual legacy invitation policy still needs deployment evidence. No Feedtwin or Pedalclass data was read or migrated, and the teams runtime remains unpublished.
+
+## Consumer and permission architecture decisions: 2026-09-07
+
+Status: recorded direction for the teams release. A separate permission engine is deferred. The source review did not change either consumer or inspect deployed data.
+
+### First consumers and acceptance requirements
+
+The consumer repositories are `../feedtwin` and `../pedalclass`, relative to the teams repository root.
+
+| Consumer | Observed source model | Required adoption behavior |
+| --- | --- | --- |
+| Feedtwin | Team roles and independent project memberships. Projects and billing use existing team references. | Preserve public team identifiers and map host IDs to component IDs. Preserve project-only access without creating team membership. Keep billing and project permissions in Feedtwin. |
+| Pedalclass | Classes, media, themes, generation, and exports use user ownership. | Keep existing private assets private. Define sharing explicitly before attaching assets to shared workspaces. Keep creator identity separate from workspace ownership. |
+
+Feedtwin's `packages/backend/convex/lib/auth.ts`, specifically `assertProjectAccessForTeam`, permits a qualifying team membership or project membership. Team membership is therefore not a universal prerequisite for product access. The host must define which access paths apply to each resource. Migration must preserve intended project-only access without granting broader team authority.
+
+Pedalclass evidence includes `packages/backend/convex/schema.ts`, `classes.ts`, `mediaAssets.ts`, `playerThemes.ts`, and `exportJobs.ts`. These files are under its backend package. Workspace adoption must preserve ownership checks for private content, including background jobs and downloads.
+
+Release and adoption work remains open:
+
+- [ ] Rehearse Feedtwin imports with stable public IDs, durable ID mapping, repeatable imports, and a recovery procedure. Follow the [Feedtwin migration map](feedtwin-migration-map.md).
+- [ ] Compare intended access before and after import, including project-only users, member removal, team deletion, and invitation acceptance.
+- [ ] Prepare Pedalclass private-content fixtures. Prove that joining a team does not expose another user's existing classes, media, or exports.
+- [ ] Define explicit sharing and ownership rules before a real Pedalclass migration. Keep plan entitlements and usage policy in the host.
+
+These requirements do not authorize production migration or establish that either adoption has passed.
+
+### Permission engine boundary
+
+Finish the teams release with fixed `owner`, `admin`, and `member` roles for team management. Keep product permissions in each host. A future permission engine must remain a separate, optional integration. It must not duplicate authoritative team membership.
+
+Keep `@vllnt/convex-permissions` as an evaluation candidate. Do not add it as a required teams dependency. Do not start a replacement engine as part of this release.
+
+The review covered version `0.1.0` and source commit `a2db4faabba934ee26eea53f48f0784b96cb95f3`. Its 13 tests, configured coverage, type checks, and build passed locally. The review was not a security audit or a production load test.
+
+The reviewed implementation has global role definitions, scoped assignments with global fallback, retained assignments after role deletion, and reads without explicit application-level bounds. These behaviors need evaluation against consumer requirements. Sources: [schema](https://github.com/vllnt/convex-permissions/blob/a2db4fa/src/component/schema.ts), [queries](https://github.com/vllnt/convex-permissions/blob/a2db4fa/src/component/queries.ts), and [mutations](https://github.com/vllnt/convex-permissions/blob/a2db4fa/src/component/mutations.ts).
+
+After teams, evaluate tenant-owned roles, explicit global grants, safe role deletion and recreation, bounded reads, typed grants, and resource-specific access paths. Test removal and rejoining without accidental restoration of old grants. Prefer reuse or upstream contributions when they meet these requirements. Consider a separate OSS engine if the required ownership and lifecycle model differs substantially. Package creation and its API remain undecided.
+
+### Future compatibility and migration
+
+An optional permission integration can preserve the teams contract. An internal redesign does not require a major release solely because its architecture changes. After `1.0`, incompatible public API or documented authorization changes require a major version under our compatibility policy. Pre-`1.0` versions remain development releases, as defined by [Semantic Versioning](https://semver.org/).
+
+A version increase does not migrate stored component data. For a breaking upgrade, maintainers must provide migration functions where needed, deployment order, upgrade tests against existing records, and a documented recovery procedure. Consumers must adapt their wrappers, run required migrations, and verify access. Installing the npm package alone is insufficient.
+
+Preserve stable public identifiers and the host/component ownership boundary now. These contracts allow future permission integration without requiring a teams redesign.
