@@ -13,13 +13,24 @@ export default defineSchema({
     teamPublicId: v.string(),
     ownerUserId: v.string(),
     personalOwnerUserId: v.optional(v.string()),
+    /** Missing on legacy records. Grants require a completed count migration. */
+    membershipCount: v.optional(
+      v.union(
+        v.object({ kind: v.literal("ready"), value: v.number() }),
+        v.object({
+          kind: v.literal("counting"),
+          cursor: v.union(v.string(), v.null()),
+          total: v.number(),
+        }),
+      ),
+    ),
     status: v.union(
       v.literal("active"),
       v.literal("pending_payment"),
       v.literal("deleted"),
     ),
     deletedAt: v.optional(v.number()),
-    /** Timestamp of the last profile (name/slug) update — used for rate limiting */
+    /** Timestamp of the last profile (name/slug) update */
     profileUpdatedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),

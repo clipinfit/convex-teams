@@ -647,3 +647,324 @@ test("bootstrap never uses a stale preference as an access grant", async () => {
   expect(result.activeTeamId).toBe(home);
   expect(result.defaultTeamId).toBe(home);
 });
+
+test("membership counts track grants, retries, removal, leave, and ownership transfer", async () => {
+  const t = setup();
+  const team = await t.mutation(api.teams.createTeam, {
+    userId: "owner",
+    teamName: "Counted",
+  });
+  const id = await teamId(t, team.teamId);
+  const count = async () =>
+    (await t.run((ctx) => ctx.db.get(id)))?.membershipCount;
+  expect(await count()).toEqual({ kind: "ready", value: 1 });
+  for (const userId of ["first", "second"]) {
+    await t.mutation(api.teams.addMemberInternal, {
+      teamId: id,
+      userId,
+      role: "member",
+      seatLimit: Number.MAX_SAFE_INTEGER,
+    });
+  }
+  await t.mutation(api.teams.addMemberInternal, {
+    teamId: id,
+    userId: "first",
+    role: "admin",
+    seatLimit: 0,
+  });
+  expect(await count()).toEqual({ kind: "ready", value: 3 });
+  await expect(
+    t.mutation(api.teams.addMemberInternal, {
+      teamId: id,
+      userId: "third",
+      role: "member",
+      seatLimit: 3,
+    }),
+  ).rejects.toThrow("seat limit");
+  expect(await count()).toEqual({ kind: "ready", value: 3 });
+  await t.mutation(api.teams.transferOwnership, {
+    userId: "owner",
+    teamSlug: team.teamSlug,
+    targetUserId: "first",
+  });
+  expect(await count()).toEqual({ kind: "ready", value: 3 });
+  await t.mutation(api.teams.removeMember, {
+    userId: "first",
+    teamSlug: team.teamSlug,
+    targetUserId: "second",
+  });
+  await t.mutation(api.teams.leaveTeam, {
+    userId: "owner",
+    teamSlug: team.teamSlug,
+  });
+  expect(await count()).toEqual({ kind: "ready", value: 1 });
+  await t.mutation(api.teams.addMemberInternal, {
+    teamId: id,
+    userId: "third",
+    role: "member",
+    seatLimit: 2,
+  });
+  expect(await count()).toEqual({ kind: "ready", value: 2 });
+});
+
+test("legacy count migration is bounded, owner-only, and restarts after removal", async () => {
+  vi.useFakeTimers();
+  try {
+    const t = setup();
+    const team = await t.mutation(api.teams.createTeam, {
+      userId: "owner",
+      teamName: "Legacy",
+    });
+    const id = await teamId(t, team.teamId);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(id, { membershipCount: undefined });
+      for (let i = 0; i < 250; i++)
+        await ctx.db.insert("teamMemberships", {
+          teamId: id,
+          userId: `legacy-${i}`,
+          role: "member",
+          createdAt: i,
+          updatedAt: i,
+        });
+    });
+    await expect(
+      t.mutation(api.teams.prepareMembershipCount, {
+        userId: "legacy-0",
+        teamSlug: team.teamSlug,
+      }),
+    ).rejects.toThrow("Not authorized");
+    await expect(
+      t.mutation(api.teams.addMemberInternal, {
+        teamId: id,
+        userId: "new",
+        role: "member",
+      }),
+    ).rejects.toThrow("Membership count is not ready");
+    expect(
+      await t.mutation(api.teams.prepareMembershipCount, {
+        userId: "owner",
+        teamSlug: team.teamSlug,
+      }),
+    ).toBe("counting");
+    await t.mutation(internal.teams.countMembershipsInternal, { teamId: id });
+    const progress = (await t.run((ctx) => ctx.db.get(id)))?.membershipCount;
+    expect(progress?.kind).toBe("counting");
+    if (progress?.kind !== "counting")
+      throw new Error("Expected a partial count.");
+    expect(progress.total).toBe(100);
+    expect(
+      await t.mutation(api.teams.prepareMembershipCount, {
+        userId: "owner",
+        teamSlug: team.teamSlug,
+      }),
+    ).toBe("counting");
+    expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual(
+      progress,
+    );
+    await t.mutation(api.teams.removeMember, {
+      userId: "owner",
+      teamSlug: team.teamSlug,
+      targetUserId: "legacy-0",
+    });
+    expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual({
+      kind: "counting",
+      cursor: null,
+      total: 0,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual({
+      kind: "ready",
+      value: 250,
+    });
+    expect(
+      await t.mutation(api.teams.prepareMembershipCount, {
+        userId: "owner",
+        teamSlug: team.teamSlug,
+      }),
+    ).toBe("ready");
+    // Duplicate delivery of a completed count job cannot overwrite a later grant.
+    await t.mutation(api.teams.addMemberInternal, {
+      teamId: id,
+      userId: "new",
+      role: "member",
+      seatLimit: 251,
+    });
+    await t.mutation(internal.teams.countMembershipsInternal, { teamId: id });
+    expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual({
+      kind: "ready",
+      value: 251,
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("an invitation remains usable after legacy count preparation and capacity rollback", async () => {
+  vi.useFakeTimers();
+  try {
+    const t = setup();
+    const team = await t.mutation(api.teams.createTeam, {
+      userId: "owner",
+      teamName: "Legacy invite",
+    });
+    const id = await teamId(t, team.teamId);
+    await t.run((ctx) => ctx.db.patch(id, { membershipCount: undefined }));
+    const invite = await t.mutation(api.invites.createInvite, {
+      userId: "owner",
+      teamSlug: team.teamSlug,
+      email: "new@example.com",
+      role: "member",
+    });
+    const args = {
+      userId: "new",
+      email: "new@example.com",
+      token: invite.token,
+    };
+    await expect(t.mutation(api.invites.acceptInvite, args)).rejects.toThrow(
+      "Membership count is not ready",
+    );
+    await t.mutation(api.teams.prepareMembershipCount, {
+      userId: "owner",
+      teamSlug: team.teamSlug,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    await expect(
+      t.mutation(api.invites.acceptInvite, { ...args, seatLimit: 1 }),
+    ).rejects.toThrow("seat limit");
+    expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual({
+      kind: "ready",
+      value: 1,
+    });
+    await t.mutation(api.invites.acceptInvite, { ...args, seatLimit: 2 });
+    await t.mutation(api.invites.acceptInvite, { ...args, seatLimit: 2 });
+    expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual({
+      kind: "ready",
+      value: 2,
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("deletion during count preparation leaves no stale count job writes", async () => {
+  vi.useFakeTimers();
+  try {
+    const t = setup();
+    const team = await t.mutation(api.teams.createTeam, {
+      userId: "owner",
+      teamName: "Legacy deletion",
+    });
+    const id = await teamId(t, team.teamId);
+    await t.run((ctx) => ctx.db.patch(id, { membershipCount: undefined }));
+    await t.mutation(api.teams.prepareMembershipCount, {
+      userId: "owner",
+      teamSlug: team.teamSlug,
+    });
+    await t.mutation(api.teams.deleteTeam, {
+      userId: "owner",
+      teamPublicId: team.teamPublicId,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(await t.run((ctx) => ctx.db.get(id))).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("duplicate long names get bounded valid slugs without sequential scans", async () => {
+  const t = setup();
+  const name = `${"x".repeat(59)} more`;
+  const first = await t.mutation(api.teams.createTeam, {
+    userId: "one",
+    teamName: name,
+  });
+  const second = await t.mutation(api.teams.createTeam, {
+    userId: "two",
+    teamName: name,
+  });
+  expect(first.teamSlug).toBe("x".repeat(59));
+  expect(second.teamSlug).toMatch(/^x{47}-[a-f0-9]{12}$/);
+  expect(second.teamSlug.length).toBeLessThanOrEqual(60);
+  expect(first.teamSlug).not.toBe(second.teamSlug);
+});
+
+test("slug collisions exhaust a fixed attempt budget without creating a team", async () => {
+  const t = setup();
+  for (const teamSlug of ["collision", "collision-aaaaaaaaaaaa"]) {
+    await t.run((ctx) =>
+      ctx.db.insert("teams", {
+        teamName: "Collision",
+        teamSlug,
+        teamPublicId: teamSlug,
+        ownerUserId: "other",
+        status: "active",
+        membershipCount: { kind: "ready", value: 0 },
+        createdAt: 0,
+        updatedAt: 0,
+      }),
+    );
+  }
+  const random = vi
+    .spyOn(crypto, "randomUUID")
+    .mockReturnValue("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  try {
+    await expect(
+      t.mutation(api.teams.createTeam, {
+        userId: "new",
+        teamName: "Collision",
+      }),
+    ).rejects.toThrow("Could not allocate a unique team slug");
+    expect(random).toHaveBeenCalledTimes(4);
+    expect(await t.run((ctx) => ctx.db.query("teams").collect())).toHaveLength(
+      2,
+    );
+  } finally {
+    random.mockRestore();
+  }
+  const retry = await t.mutation(api.teams.createTeam, {
+    userId: "new",
+    teamName: "Collision",
+  });
+  expect(retry.teamSlug).toMatch(/^collision-[a-f0-9]{12}$/);
+});
+
+test("personal workspace slug collisions are bounded and failed bootstrap is atomic", async () => {
+  const t = setup();
+  await t.run((ctx) =>
+    ctx.db.insert("teams", {
+      teamName: "Existing",
+      teamSlug: "personal-aaaaaaaaaaaa",
+      teamPublicId: "existing",
+      ownerUserId: "other",
+      status: "active",
+      createdAt: 0,
+      updatedAt: 0,
+    }),
+  );
+  const random = vi
+    .spyOn(crypto, "randomUUID")
+    .mockReturnValue("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  try {
+    await expect(
+      t.mutation(api.teams.ensurePersonalTeam, {
+        userId: "new",
+        name: "Personal",
+      }),
+    ).rejects.toThrow("Could not allocate a unique team slug");
+    expect(random).toHaveBeenCalledTimes(5);
+    expect(
+      await t.run((ctx) => ctx.db.query("userTeamPreferences").collect()),
+    ).toHaveLength(0);
+  } finally {
+    random.mockRestore();
+  }
+  const result = await t.mutation(api.teams.ensurePersonalTeam, {
+    userId: "new",
+    name: "Personal",
+  });
+  const id = await teamId(t, result.defaultTeamId);
+  expect((await t.run((ctx) => ctx.db.get(id)))?.membershipCount).toEqual({
+    kind: "ready",
+    value: 1,
+  });
+});

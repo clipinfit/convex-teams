@@ -27,12 +27,26 @@ Teams does not set prices, cancel subscriptions, or remove host content. Create 
 | --- | --- |
 | `Not authorized.` | Authenticate the correct actor or obtain the required membership. |
 | `Team not found.` | Resolve another workspace. The team is missing or deleted. |
+| `Membership count is not ready.` | Have the owner run `prepareMembershipCount` and wait for `ready`. |
+| `Could not allocate a unique team slug.` | Retry workspace creation. |
 | `Team seat limit reached.` | Change capacity before retrying the invitation. |
 | `Membership no longer exists.` | Obtain a new invitation. An accepted token cannot restore access. |
 | `INVITATION_EXPIRED` or `INVITATION_REVOKED` | Obtain a new invitation. |
 | `INVITATION_AUDIENCE_MISMATCH` | Use the verified intended recipient. |
 
 Convex handles transaction conflicts. Do not catch a membership-grant error and return success from a host acceptance mutation.
+
+## Prepare counts for older teams
+
+New workspaces start with an exact membership count. Older component records can lack this field. Before granting a new membership to an older team, run this method from an authenticated owner mutation:
+
+```ts
+await teams.prepareMembershipCount(ctx, userId, teamSlug);
+```
+
+The method returns `counting` while background batches of at most 100 memberships run. Call it again to check for `ready`. Repeated calls are safe. New grants and invitation acceptance fail until the count is ready. Acceptance failure leaves the invitation usable for a later retry.
+
+Existing access, removal, leave, and deletion remain available. A removal or leave during counting restarts the scan, so sustained removals can delay completion. Ownership transfer does not change the total. Completed count jobs cannot overwrite later grants.
 
 ## Existing data
 

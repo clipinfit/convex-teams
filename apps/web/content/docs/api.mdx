@@ -23,6 +23,7 @@ The API targets an unpublished alpha. Signatures can change before release. See 
 | Method | Purpose |
 | --- | --- |
 | `createTeam(ctx, userId, teamName)` | Create a workspace with the actor as owner. |
+| `prepareMembershipCount(ctx, userId, teamSlug)` | Prepare older records in bounded batches. Owner-only. Returns `counting` or `ready`. |
 | `ensurePersonalTeam(ctx, args)` | Find or create the actor's personal workspace. |
 | `setActiveTeam(ctx, userId, teamSlug)` | Select an accessible workspace. |
 | `setDefaultTeam(ctx, userId, teamId)` | Set the default preference. |

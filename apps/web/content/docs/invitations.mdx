@@ -31,6 +31,8 @@ await teams.acceptInvite(ctx, {
 
 The owner consumes a seat. Pending invitations do not reserve seats. Omit `seatLimit` only for an unlimited policy. A limit must be a nonnegative safe integer.
 
+Seat checks read a stored member count. Membership changes update that count in the same transaction. The cost of the check does not grow with the configured seat limit. Duplicate grants and role changes do not increase the count.
+
 A capacity failure rolls back invitation acceptance and membership creation. You can retry the same invitation after capacity changes. A limit reduction does not remove existing members.
 
 Repeated acceptance preserves the current role. An accepted token cannot restore a removed membership.

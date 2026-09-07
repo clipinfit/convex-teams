@@ -30,15 +30,13 @@ export async function grantMembership(
     )
     .unique();
   if (existing) return existing;
-  if (args.seatLimit !== undefined) {
-    // Read only enough rows to determine whether this grant fits.
-    const members = await ctx.db
-      .query("teamMemberships")
-      .withIndex("by_teamId", (q) => q.eq("teamId", args.teamId))
-      .take(args.seatLimit);
-    if (members.length >= args.seatLimit)
-      throw new Error("Team seat limit reached.");
-  }
+  if (team.membershipCount?.kind !== "ready")
+    throw new Error(
+      "Membership count is not ready. The owner must run prepareMembershipCount.",
+    );
+  const count = team.membershipCount.value;
+  if (args.seatLimit !== undefined && count >= args.seatLimit)
+    throw new Error("Team seat limit reached.");
   const now = Date.now();
   const id = await ctx.db.insert("teamMemberships", {
     teamId: args.teamId,
@@ -47,7 +45,31 @@ export async function grantMembership(
     createdAt: now,
     updatedAt: now,
   });
+  await ctx.db.patch(team._id, {
+    membershipCount: { kind: "ready", value: count + 1 },
+  });
   const member = await ctx.db.get(id);
   if (!member) throw new Error("Membership creation failed.");
   return member;
+}
+
+/** Update the count in the same transaction that removes an active membership. */
+export async function removeMembership(
+  ctx: MutationCtx,
+  team: Doc<"teams">,
+  memberId: Id<"teamMemberships">,
+) {
+  await ctx.db.delete(memberId);
+  const count = team.membershipCount;
+  if (count?.kind === "ready") {
+    await ctx.db.patch(team._id, {
+      membershipCount: { kind: "ready", value: count.value - 1 },
+    });
+  } else if (count?.kind === "counting") {
+    // A queued continuation reads this state. Restart so removals on an earlier
+    // page cannot leave an inflated total. New grants are blocked until ready.
+    await ctx.db.patch(team._id, {
+      membershipCount: { kind: "counting", cursor: null, total: 0 },
+    });
+  }
 }

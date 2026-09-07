@@ -2,6 +2,10 @@
 
 ## Unreleased: 0.1.0-alpha.0
 
+- Replace per-grant membership scans with atomic membership counts.
+- Add owner-only count preparation for older component records in batches of 100. Block new grants until preparation completes.
+- Bound slug allocation to five attempts with random collision suffixes and a 60-character limit.
+
 - Use the published convex-invite 0.1.1 pagination fix and remove the local Bun patch.
 
 - Require pagination for team listing and bound all list requests to 100 rows.

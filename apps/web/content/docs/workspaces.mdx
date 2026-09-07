@@ -19,6 +19,12 @@ Each team has one owner. An owner can transfer ownership to an existing member. 
 
 Invitations and direct grants preserve existing roles. Use `updateMemberRole` for an explicit change. Generic role changes cannot change the owner.
 
+## Slug allocation
+
+Creation checks at most five candidates. Shared workspaces first try the name. A collision adds a random suffix. Personal workspaces always include a random suffix. Generated slugs stay within 60 characters.
+
+If all candidates collide, the mutation fails without creating a workspace. Retry creation. Do not depend on sequential suffixes such as `-2`.
+
 ## Personal teams
 
 `ensurePersonalTeam` creates a personal workspace explicitly. A separate personal-owner field identifies it. A default-team preference does not define personal ownership.

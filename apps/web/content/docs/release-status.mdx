@@ -20,13 +20,14 @@ Actual local Convex transactions also verify the final-seat race, concurrent per
 
 The invite pagination fix is published as `convex-invite@0.1.1`. Teams uses that version without a local patch. A clean packed npm consumer passes against registry dependencies, including a local backend check of pagination and acceptance rollback.
 
+Membership grants now use an atomic stored count. Legacy counts initialize in bounded batches. Slug allocation has a fixed attempt budget. Runtime tests cover both paths, including the final-seat race and very large seat policies on a local backend.
+
 ## Remaining release gates
 
-1. Complete the large-capacity seat check and slug allocation workload review.
-2. Decide the legacy data policy from deployment evidence.
-3. Add stable-identifier imports and rehearse a real development consumer migration.
-4. Complete attribution and supported-version checks.
-5. Repeat the registry-only packed consumer check on the final release candidate.
+1. Decide the legacy data policy from deployment evidence.
+2. Add stable-identifier imports and rehearse a real development consumer migration.
+3. Complete attribution and supported-version checks.
+4. Repeat the registry-only packed consumer check on the final release candidate.
 
 Track the [completion PRD](https://github.com/clipinfit/convex-teams/blob/main/docs/prd-component-completion.md) and the [invite pagination fix](https://github.com/dciccale/convex-invite/pull/1).
 

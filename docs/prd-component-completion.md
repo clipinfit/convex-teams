@@ -340,3 +340,16 @@ The registry archive integrity matches the tested release archive: `sha512-a4/hR
 Teams now pins `convex-invite@0.1.1`. The `patches` directory and workspace `patchedDependencies` entry are removed. `bun run pack:smoke` passed without a candidate argument. Its fresh npm installation used the registry version, registered both components, read two invitation pages, and verified acceptance rollback and retry after a capacity failure. All 22 teams tests, type checks, lint, docs links, builds, and package-content checks pass.
 
 The invite dependency blocker is resolved. Remaining teams release work is the capacity and slug workload review, legacy data policy, stable-identifier imports and consumer rehearsal, attribution, and supported-version checks. Re-run the registry-only smoke check on the final release candidate. The teams runtime remains unpublished at `0.1.0-alpha.0`.
+
+
+## Capacity and slug workload checkpoint: 2026-09-07
+
+Seat checks no longer read up to `seatLimit` membership rows. Each active team stores an exact count. Creation starts at one owner. Grants, removal, and leave update the count in the same transaction as the membership change. Existing grants, role changes, and ownership transfers leave the count unchanged. Grants still serialize through the team record, preserving the final-seat invariant.
+
+The optional schema field preserves older records. An authenticated owner calls `prepareMembershipCount` to initialize them in batches of at most 100 memberships. Progress is stored as either `counting` with its cursor and subtotal, or `ready` with its exact total. New grants are blocked until ready. Existing access and removal remain available. Removals restart an in-progress scan. Repeated preparation resumes progress, and duplicate jobs cannot overwrite a ready count. Deletion makes pending count jobs no-ops. Sustained removals can delay preparation, so migration should use a quiet membership-write window.
+
+Shared and personal slug allocation use at most five indexed candidate checks. Collision suffixes use 12 random hexadecimal characters. All generated slugs stay within 60 characters. Exhaustion fails the mutation atomically with an explicit retry error. Callers must not depend on sequential suffixes.
+
+Validation: 29 component and host tests pass. Type checks, lint, documentation links, production build, package checks, and the registry-only packed consumer check pass. Local backend proofs pass for the final-seat race, concurrent personal bootstrap, duplicate grants, `Number.MAX_SAFE_INTEGER` seat policy, and concurrent same-name creation. Generated component declarations were regenerated with the Convex CLI. Existing local component records accepted the optional schema field without a destructive reset.
+
+Next: implement authorized stable-identifier imports and an isolated Feedtwin migration fixture. The actual legacy invitation policy still needs deployment evidence. No Feedtwin or Pedalclass data was read or migrated, and the teams runtime remains unpublished.

@@ -40,9 +40,11 @@ cd packages/example-backend
 bunx convex run proof:run
 bunx convex run proof:concurrentBootstrap
 bunx convex run proof:concurrentDuplicateGrant
+bunx convex run proof:largeSeatLimit
+bunx convex run proof:concurrentSlugs
 ```
 
-The seat proof must return one successful grant, one rejected grant, and two members. The bootstrap proof must create one personal team. The duplicate grant proof must create one membership for the recipient.
+The seat proof must return one successful grant, one rejected grant, and two members. The bootstrap proof must create one personal team. The duplicate grant proof must create one membership for the recipient. The large-limit proof must return two members. The slug proof must return two distinct slugs within the length limit.
 
 ## How the example mounts teams
 

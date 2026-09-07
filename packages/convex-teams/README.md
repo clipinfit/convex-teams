@@ -45,6 +45,8 @@ Run the backend concurrency proof from `packages/example-backend`:
 bunx convex run proof:run
 bunx convex run proof:concurrentBootstrap
 bunx convex run proof:concurrentDuplicateGrant
+bunx convex run proof:largeSeatLimit
+bunx convex run proof:concurrentSlugs
 ```
 
 The proof creates a development fixture. One direct grant and one invitation acceptance compete for the final seat. The expected result is one successful grant, one rejected grant, and two members.
@@ -69,6 +71,10 @@ Never expose a submitted actor ID or email as trusted identity. Component functi
 
 The host must check membership before each protected content operation. An active-team preference does not grant access to host tables, files, or media URLs.
 
+## Slug allocation
+
+Creation tries at most five slug candidates. The first shared workspace can use the name alone. Collisions use a random suffix instead of a sequential number. Personal workspaces always use a random suffix. Generated slugs stay within 60 characters. If all attempts collide, creation fails atomically and the host can retry.
+
 ## Roles
 
 | Operation | Owner | Admin | Member |
@@ -88,6 +94,10 @@ Personal team creation is an explicit host operation through `ensurePersonalTeam
 ## Seats and invitations
 
 Pending invitations do not reserve seats. On each `acceptInvite` or trusted `addMember` call, pass the current `seatLimit` from host configuration. Read that configuration in the same host mutation. Omit the limit only for an unlimited policy. A limit must be a nonnegative safe integer. The owner consumes a seat.
+
+Seat checks read a stored membership count instead of scanning the team's members. Creation, grants, removal, and leave update that count in the same transaction. Duplicate grants and role changes do not increase it. Concurrent grants still contend on the team record so they cannot oversubscribe the final seat.
+
+For team records created before count tracking, the owner must call `prepareMembershipCount(ctx, userId, teamSlug)` through an authenticated host mutation. It returns `counting` until background batches of at most 100 memberships finish, then returns `ready`. New grants, including invitation acceptance, fail until the count is ready. Existing access, removal, leave, and deletion remain available. A removal during counting restarts the scan. Repeated preparation and count-job delivery are safe.
 
 A capacity failure rolls back both child invitation acceptance and the new membership. Existing members retain access after a limit reduction. Repeated acceptance preserves the member's current role. A previously accepted invitation cannot restore a removed member.
 

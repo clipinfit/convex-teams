@@ -61,6 +61,12 @@ export class TeamsClient {
   ) {
     return ctx.runMutation(this.component.teams.ensurePersonalTeam, args);
   }
+  prepareMembershipCount(ctx: MutationCtx, userId: string, teamSlug: string) {
+    return ctx.runMutation(this.component.teams.prepareMembershipCount, {
+      userId,
+      teamSlug,
+    });
+  }
   createTeam(ctx: MutationCtx, userId: string, teamName: string) {
     return ctx.runMutation(this.component.teams.createTeam, {
       userId,

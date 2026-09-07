@@ -302,6 +302,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         },
         Name
       >;
+      prepareMembershipCount: FunctionReference<
+        "mutation",
+        "internal",
+        { teamSlug: string; userId: string },
+        "ready" | "counting",
+        Name
+      >;
       removeMember: FunctionReference<
         "mutation",
         "internal",

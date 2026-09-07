@@ -182,3 +182,59 @@ export const concurrentDuplicateGrant = internalAction({
     };
   },
 });
+
+/** A large configured limit must not become a large database read request. */
+export const largeSeatLimit = internalMutation({
+  args: {},
+  returns: v.object({ memberCount: v.number() }),
+  handler: async (ctx) => {
+    const owner = crypto.randomUUID();
+    const team = await ctx.runMutation(components.teams.teams.createTeam, {
+      userId: owner,
+      teamName: "Large seat policy",
+    });
+    await ctx.runMutation(components.teams.teams.addMemberInternal, {
+      teamId: team.teamId,
+      userId: crypto.randomUUID(),
+      role: "member",
+      seatLimit: Number.MAX_SAFE_INTEGER,
+    });
+    const members = await ctx.runQuery(components.teams.teams.listMembers, {
+      userId: owner,
+      teamSlug: team.teamSlug,
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    if (members?.page.length !== 2)
+      throw new Error("Large seat limit invariant failed.");
+    return { memberCount: members.page.length };
+  },
+});
+
+export const createNamed = internalMutation({
+  args: { userId: v.string(), teamName: v.string() },
+  returns: v.string(),
+  handler: async (ctx, args) =>
+    (await ctx.runMutation(components.teams.teams.createTeam, args)).teamSlug,
+});
+export const concurrentSlugs = internalAction({
+  args: {},
+  returns: v.object({
+    uniqueSlugs: v.boolean(),
+    withinLengthLimit: v.boolean(),
+  }),
+  handler: async (
+    ctx,
+  ): Promise<{ uniqueSlugs: boolean; withinLengthLimit: boolean }> => {
+    const args = {
+      userId: crypto.randomUUID(),
+      teamName: `Same name ${crypto.randomUUID()}`,
+    };
+    const slugs = await Promise.all([
+      ctx.runMutation(internal.proof.createNamed, args),
+      ctx.runMutation(internal.proof.createNamed, args),
+    ]);
+    if (new Set(slugs).size !== 2 || slugs.some((slug) => slug.length > 60))
+      throw new Error("Concurrent slug invariant failed.");
+    return { uniqueSlugs: true, withinLengthLimit: true };
+  },
+});

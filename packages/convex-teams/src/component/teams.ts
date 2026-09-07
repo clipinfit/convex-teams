@@ -18,7 +18,7 @@ import {
   type QueryCtx,
   query,
 } from "./_generated/server.js";
-import { grantMembership } from "./lib/membership.js";
+import { grantMembership, removeMembership } from "./lib/membership.js";
 import { boundedPagination, FALLBACK_PAGE_SIZE } from "./lib/pagination.js";
 import { slugify } from "./lib/slugify.js";
 import { getLiveTeamBySlug } from "./lib/teams.js";
@@ -116,28 +116,32 @@ function getEmailLocalPart(email: string | null | undefined): string | null {
   return local.trim() || null;
 }
 
-async function resolveUniqueSlug(ctx: DbCtx, raw: string): Promise<string> {
+const SLUG_ATTEMPTS = 5;
+async function resolveUniqueSlug(
+  ctx: DbCtx,
+  raw: string,
+  randomSuffix = false,
+): Promise<string> {
   const base = slugify(raw) || "team";
-  let slug = base;
-  let suffix = 2;
-  while (await getLiveTeamBySlug(ctx, slug)) {
-    slug = `${base}-${suffix++}`;
+  for (let attempt = 0; attempt < SLUG_ATTEMPTS; attempt++) {
+    const slug =
+      !randomSuffix && attempt === 0
+        ? base
+        : `${base.slice(0, 47).replace(/-+$/, "")}-${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+    if (!(await getLiveTeamBySlug(ctx, slug))) return slug;
   }
-  return slug;
+  throw new Error("Could not allocate a unique team slug. Retry creation.");
 }
 
 async function resolveUniquePersonalSlug(
   ctx: DbCtx,
   profile?: IdentityProfile,
 ): Promise<string> {
-  const displayName = getDisplayName(profile);
-  const localPart = getEmailLocalPart(profile?.email);
-  const base = slugify(displayName ?? localPart ?? "user") || "user";
-  let slug = `${base}-${crypto.randomUUID().replaceAll("-", "").slice(0, 6)}`;
-  while (await getLiveTeamBySlug(ctx, slug)) {
-    slug = `${base}-${crypto.randomUUID().replaceAll("-", "").slice(0, 6)}`;
-  }
-  return slug;
+  return resolveUniqueSlug(
+    ctx,
+    getDisplayName(profile) ?? getEmailLocalPart(profile?.email) ?? "user",
+    true,
+  );
 }
 
 async function getOrCreateUserPreferences(
@@ -281,6 +285,7 @@ async function ensurePersonalTeamForUser(
     teamPublicId,
     ownerUserId: userId,
     personalOwnerUserId: userId,
+    membershipCount: { kind: "ready", value: 1 },
     status: "active",
     createdAt: now,
     updatedAt: now,
@@ -664,6 +669,7 @@ export const createTeam = mutation({
       teamSlug,
       teamPublicId,
       ownerUserId: args.userId,
+      membershipCount: { kind: "ready", value: 1 },
       status: "active",
       createdAt: now,
       updatedAt: now,
@@ -865,7 +871,7 @@ export const removeMember = mutation({
     if (target.role === "owner")
       throw new Error("Cannot remove the team owner.");
 
-    await ctx.db.delete(target._id);
+    await removeMembership(ctx, team, target._id);
     await repairPreferences(ctx, args.targetUserId);
     return { ok: true };
   },
@@ -946,7 +952,7 @@ export const leaveTeam = mutation({
     if (membership.role === "owner")
       throw new Error("Team owner cannot leave.");
 
-    await ctx.db.delete(membership._id);
+    await removeMembership(ctx, team, membership._id);
     const redirectTeam = await repairPreferences(ctx, args.userId);
 
     return {
@@ -1202,6 +1208,65 @@ export const repairPreferencesInternal = internalMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await repairPreferences(ctx, args.userId, args.cursor);
+    return null;
+  },
+});
+
+/** Owner-only, idempotent preparation for records created before count tracking. */
+export const prepareMembershipCount = mutation({
+  args: { userId: v.string(), teamSlug: v.string() },
+  returns: v.union(v.literal("ready"), v.literal("counting")),
+  handler: async (ctx, args) => {
+    const team = await getLiveTeamBySlug(ctx, args.teamSlug.trim());
+    if (!team) throw new Error("Team not found.");
+    const owner = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_teamId_userId", (q) =>
+        q.eq("teamId", team._id).eq("userId", args.userId),
+      )
+      .unique();
+    if (team.ownerUserId !== args.userId || owner?.role !== "owner")
+      throw new Error("Not authorized.");
+    if (team.membershipCount?.kind === "ready") return "ready";
+    if (!team.membershipCount)
+      await ctx.db.patch(team._id, {
+        membershipCount: { kind: "counting", cursor: null, total: 0 },
+      });
+    // A repeated call can resume an interrupted job without discarding progress.
+    await ctx.scheduler.runAfter(0, internal.teams.countMembershipsInternal, {
+      teamId: team._id,
+    });
+    return "counting";
+  },
+});
+
+/** Progress lives on the team so duplicate jobs and removals cannot double count. */
+export const countMembershipsInternal = internalMutation({
+  args: { teamId: v.id("teams") },
+  returns: v.null(),
+  handler: async (ctx, { teamId }) => {
+    const team = await ctx.db.get(teamId);
+    if (
+      !team ||
+      team.status === "deleted" ||
+      team.membershipCount?.kind !== "counting"
+    )
+      return null;
+    const state = team.membershipCount;
+    const page = await paginator(ctx.db, schema)
+      .query("teamMemberships")
+      .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
+      .paginate(boundedPagination({ numItems: 100, cursor: state.cursor }));
+    const total = state.total + page.page.length;
+    await ctx.db.patch(teamId, {
+      membershipCount: page.isDone
+        ? { kind: "ready", value: total }
+        : { kind: "counting", cursor: page.continueCursor, total },
+    });
+    if (!page.isDone)
+      await ctx.scheduler.runAfter(0, internal.teams.countMembershipsInternal, {
+        teamId,
+      });
     return null;
   },
 });

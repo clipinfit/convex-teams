@@ -35,4 +35,4 @@ During cutover, freeze membership writes or route all writes to one authoritativ
 
 ## Remaining prerequisites
 
-The teams runtime is partly implemented. Broad per-user list bounds, final migration policy, a corrected published invite dependency, and release provenance remain open. No import API or executed fixture migration exists yet. Feedtwin integration must wait for these contracts to be complete.
+The teams runtime is partly implemented. Per-user lists, seat checks, and slug allocation are bounded. The corrected convex-invite dependency is published. Legacy component records require owner-triggered membership count preparation before new grants. Final migration policy and release provenance remain open. No import API or executed fixture migration exists yet. Feedtwin integration must wait for these contracts to be complete.
