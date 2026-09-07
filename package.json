@@ -58,7 +58,8 @@
     "codegen": "cd example && convex codegen --component-dir ../src/component",
     "pack:check": "node scripts/check-package.mjs",
     "prepublishOnly": "node scripts/check-release.mjs",
-    "version:alpha": "npm version prerelease --preid=alpha --no-git-tag-version && bun install --lockfile-only"
+    "version:alpha": "npm version prerelease --preid=alpha --no-git-tag-version && bun install --lockfile-only",
+    "pack:smoke": "node scripts/smoke-package.mjs"
   },
   "peerDependencies": {
     "convex": ">=1.43.0"

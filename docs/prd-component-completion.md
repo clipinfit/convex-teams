@@ -290,3 +290,21 @@ Fallback resolution checks the two saved preferences by indexed membership looku
 Status-aware indexes bound slug and personal-workspace lookup. No runtime teams or invitation wrapper uses `.collect()`. Seat checks still read up to the trusted seat limit and need a final large-capacity review. Slug allocation retries also need a final workload review.
 
 Validation: 22 runtime tests pass. Type checks, lint, build, and package-content checks pass. The local backend still passes the final-seat race, concurrent personal bootstrap, and duplicate same-user grant proofs with the paginated API. Generated component types were regenerated through the example.
+
+## Invite correction and packed consumer checkpoint: 2026-09-07
+
+Checkpoint `8e88184` contains the bounded workspace reads. GitHub CI passed.
+
+The invite correction is now prepared in an isolated worktree of the source repository. Commit `5c64360` on `fix/component-pagination` replaces native pagination in all three management queries and adds regression coverage. [Draft invite PR #1](https://github.com/dciccale/convex-invite/pull/1) contains the fix. The invite package passed 26 tests, type checks, lint, build, and its clean package verification. No invite version was published.
+
+`bun run pack:smoke` now creates a fresh npm consumer from the teams archive. It checks exported types, the exported test registration helper, and an actual local Convex backend. With the corrected local invite archive, the check passed: two distinct invitation pages, two members after acceptance, and successful retry after a capacity failure rolled back acceptance.
+
+This candidate archive still identifies itself as `convex-invite@0.1.0`; it is an unpublished source build, not the registry artifact. The source fix needs a new published version. The teams patch and publication guard remain until that version is available. Release validation must then pass without a candidate argument.
+
+Next release gates:
+
+1. Review and release the corrected invite package, then update the teams dependency and remove the patch. Publishing requires a separate user request.
+2. Complete the large-capacity seat check and slug allocation workload review.
+3. Decide the legacy data migration policy from deployment evidence.
+4. Add stable-identifier imports, rehearse the Feedtwin migration fixture, and validate a real development consumer.
+5. Complete attribution and supported-version checks. Run the registry-only packed consumer check before a component release.

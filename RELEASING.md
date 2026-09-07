@@ -43,3 +43,15 @@ bun run pack:check
 `prepublishOnly` rejects the source package while it has a dependency patch or uncommitted changes. This guard is only a mechanical check. It does not establish consumer readiness. Do not bypass it to publish the component.
 
 Published versions are immutable. Prepare a new version to correct a published artifact. See [npm's publication rules](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
+
+## Verify an installed component
+
+Run `bun run pack:smoke` to build the package and install its archive in a fresh temporary npm project. The check validates exported types, the test registration helper, the mounted component tree, invitation pagination, and acceptance rollback on a local Convex backend. It requires Node.js, npm, and access to download the Convex backend. The temporary project is retained for inspection.
+
+Until a corrected invite version is published, the registry dependency blocks this check. To validate an unpublished invite correction, pass its archive:
+
+```sh
+bun run pack:smoke /absolute/path/convex-invite-candidate.tgz
+```
+
+A candidate result validates that archive only. Before publication, replace the patched dependency with its corrected registry version, remove the patch, and rerun `bun run pack:smoke` without an argument. A local candidate does not satisfy this release gate.
