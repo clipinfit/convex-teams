@@ -324,3 +324,8 @@ The user requested a monorepo based on convex-chat and a website deployed to Ver
 The 22 component and host tests pass. Type checks, lint, package-content checks, and website production build pass. The clean packed consumer check still passes with the corrected local invite archive. The browser check covers desktop and mobile layouts, documentation navigation, code selection, and search results.
 
 The Vercel project is `convex-teams` under the `clipin` team, with `apps/web` as its root directory. Deployment credentials and local Convex files stay ignored.
+
+
+Vercel production deployment succeeded from checkpoint `9b8dbef`, which pins Bun 1.4.0 for Vercel's build environment. The first attempt used Vercel's older Bun and could not parse the lockfile. The live website is [convex-teams.vercel.app](https://convex-teams.vercel.app), with docs at [/docs](https://convex-teams.vercel.app/docs). The project is connected to GitHub for production deployments from `main`.
+
+GitHub CI passed for the monorepo and Bun fix. Public HTTP checks passed for the landing page and all seven docs routes. Production search returns relevant results. See [website deployment](website-deployment.md) for repeatable deployment commands. No component runtime was published.

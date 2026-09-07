@@ -1,5 +1,7 @@
 # convex-teams
 
+[Website](https://convex-teams.vercel.app) · [Documentation](https://convex-teams.vercel.app/docs)
+
 A Convex component for workspace identity, membership, ownership, and preferences. Public API names use `team` for a workspace.
 
 This is a development implementation for `convex-teams`, maintained in [clipinfit/convex-teams](https://github.com/clipinfit/convex-teams). The component targets `0.1.0-alpha.0`. It is not ready for production. The published [`0.0.0-development.0` name-claim artifact](https://www.npmjs.com/package/convex-teams/v/0.0.0-development.0) contains only a development notice and licence. It does not provide a runtime API.
@@ -14,6 +16,8 @@ See [the changelog](CHANGELOG.md) and [release procedure](RELEASING.md) for vers
 - `docs`: implementation plans and migration records.
 
 Bun manages dependencies. Turborepo runs build, type checks, and tests across packages. Run `bun run dev:web` for the website or `bun run dev:example` for the local backend.
+
+See [website deployment](docs/website-deployment.md) for Vercel settings and deployment commands.
 
 ## Run the development example
 
