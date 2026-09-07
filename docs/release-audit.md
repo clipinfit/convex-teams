@@ -30,7 +30,17 @@ The separate permission engine remains deferred. Product-specific permissions, a
 
 ## Final publication gates
 
-- [ ] Run all checks on the exact candidate version and commit.
-- [ ] Publish the candidate under a prerelease tag and verify registry integrity.
-- [ ] Install the published candidate in clean consumers and rerun the critical checks.
+- [x] Run all checks on the exact candidate version and commit.
+- [x] Publish the candidate under a prerelease tag and verify registry integrity.
+- [x] Install the published candidate in clean consumers and rerun the critical checks.
 - [ ] Publish the first stable version and verify tags, integrity, documentation, and repository release.
+
+## Published candidate
+
+`1.0.0-rc.0` was published under `next` from commit `98324d2ac159f87de1b2754d790ca6d8b7a253bf`. [CI passed](https://github.com/clipinfit/convex-teams/actions/runs/34147777563). The registry integrity matches the local archive:
+
+```text
+sha512-6DdvXz3evNvOtIMXgF3xzFbLP93OamlUkOEntWWdMAro4MBcroP88qoaAMKuNIb+69vc7etnr724KM3Q0cz1bg==
+```
+
+Clean registry installations passed on Convex 1.43.0 and 1.45.0. Pedalclass passed all 24 backend tests. Feedtwin passed its source comparison and native authenticated lifecycle checks. Each command used `TEAMS_RELEASE_VERSION=1.0.0-rc.0`; no local teams archive supplied the runtime.

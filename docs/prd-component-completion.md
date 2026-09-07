@@ -1,7 +1,7 @@
 # Complete convex-teams for application use and CLIPIN OSS
 
 Date: 2026-09-07.
-Status: implementation in progress. The 2026-09-07 continuation completed the local baseline, critical membership fixes, and child invitation integration. Consumer migration and release preparation remain incomplete. See the implementation handoff below.
+Status: release candidate `1.0.0-rc.0` published under `next`. Component implementation and development consumer rehearsals are complete. Final registry validation and stable publication remain. Production adoption is separate. See the release audit.
 
 ## Purpose
 
@@ -168,8 +168,8 @@ Exit condition: a consumer runs against the component and the migration has repe
 ### Phase 4: prepare the independent release
 
 - [x] Finalize CLIPIN package metadata, licence, contribution guidance, security contact, and release instructions.
-- [ ] Replace unfinished installation claims in the README with verified examples.
-- [ ] Validate a clean packed installation and supported Convex versions.
+- [x] Replace unfinished installation claims in the README with verified examples.
+- [x] Validate a clean packed installation and supported Convex versions.
 - [x] Add CI for build, type checks, lint, runtime tests, and a package dry run. Clean consumer installation remains a separate release requirement.
 - [x] Document compatibility and migration limits.
 
@@ -371,14 +371,14 @@ Feedtwin's `packages/backend/convex/lib/auth.ts`, specifically `assertProjectAcc
 
 Pedalclass evidence includes `packages/backend/convex/schema.ts`, `classes.ts`, `mediaAssets.ts`, `playerThemes.ts`, and `exportJobs.ts`. These files are under its backend package. Workspace adoption must preserve ownership checks for private content, including background jobs and downloads.
 
-Release and adoption work remains open:
+Release validation and later adoption:
 
-- [ ] Rehearse Feedtwin imports with stable public IDs, durable ID mapping, repeatable imports, and a recovery procedure. Follow the [Feedtwin migration map](feedtwin-migration-map.md).
-- [ ] Compare intended access before and after import, including project-only users, member removal, team deletion, and invitation acceptance.
-- [ ] Prepare Pedalclass private-content fixtures. Prove that joining a team does not expose another user's existing classes, media, or exports.
+- [x] Rehearse Feedtwin imports with stable public IDs, durable ID mapping, repeatable imports, and a recovery procedure. Follow the [Feedtwin migration map](feedtwin-migration-map.md).
+- [x] Compare intended access before and after import, including project-only users, member removal, team deletion, and invitation acceptance.
+- [x] Prepare Pedalclass private-content fixtures. Prove that joining a team does not expose another user's existing classes, media, or exports.
 - [ ] Define explicit sharing and ownership rules before a real Pedalclass migration. Keep plan entitlements and usage policy in the host.
 
-These requirements do not authorize production migration or establish that either adoption has passed.
+The development rehearsals passed. Production adoption remains separate. Pedalclass sharing rules must be defined before a future shared-content migration.
 
 ### Permission engine boundary
 

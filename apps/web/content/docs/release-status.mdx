@@ -8,7 +8,7 @@ description: What is available today and what remains before the first component
 - The public source repository contains the development implementation.
 - The npm name `convex-teams` is claimed as `0.0.0-development.0`.
 - That published artifact contains a notice, package metadata, and licence only.
-- The source runtime targets `1.0.0-rc.0`. It has not been published.
+- The runtime candidate `1.0.0-rc.0` is published under `next`. Its registry integrity matches the tested archive.
 
 Both npm's `development` and `latest` tags refer to the notice-only artifact. Do not use it as a working component.
 
@@ -24,9 +24,7 @@ Membership grants now use an atomic stored count. Legacy counts initialize in bo
 
 ## Remaining release gates
 
-1. Complete final checks on the exact candidate version.
-2. Publish the candidate under `next` and validate clean registry installations.
-3. Publish `1.0.0` under `latest` after candidate verification.
+The published candidate passed clean registry installation checks on Convex 1.43.0 and 1.45.0 and both consumer rehearsals. Stable publication under `latest` remains.
 
 Production inventory, both consumer rehearsals, recovery, attribution, and supported-version checks are recorded in the [release audit](https://github.com/clipinfit/convex-teams/blob/main/docs/release-audit.md). Feedtwin production cutover is a separate operation.
 

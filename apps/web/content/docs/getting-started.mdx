@@ -1,9 +1,17 @@
 ---
-title: Run the local example
-description: Evaluate the development component in an anonymous local Convex backend.
+title: Install and run teams
+description: Install the release candidate and run the local example.
 ---
 
-Use Node.js 22 or later and Bun 1.4.0. The published npm package has no runtime yet. Use this repository to evaluate the unpublished teams runtime. Its invite dependency is published and needs no local patch.
+Install the published release candidate in your Convex application:
+
+```sh
+npm install convex-teams@1.0.0-rc.0
+```
+
+Use Convex `>=1.43.0 <2.0.0`. The invitation dependency installs automatically. Mount teams with the configuration below, then run `npx convex dev` in your application to generate its component API.
+
+To run the repository example, use Node.js 22 or later and Bun 1.4.0.
 
 ## 1. Get the source
 

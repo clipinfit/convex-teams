@@ -4,7 +4,13 @@
 
 A Convex component for workspace identity, membership, ownership, and preferences. Public API names use `team` for a workspace.
 
-This is a development implementation for `convex-teams`, maintained in [clipinfit/convex-teams](https://github.com/clipinfit/convex-teams). The component candidate is `1.0.0-rc.0` and is under final release validation. The published [`0.0.0-development.0` name-claim artifact](https://www.npmjs.com/package/convex-teams/v/0.0.0-development.0) contains only a development notice and licence. It does not provide a runtime API.
+The release candidate `1.0.0-rc.0` is available on npm under `next`. It includes the component runtime and uses the published `convex-invite@0.1.1` dependency. The `latest` tag still identifies the historical notice-only package. Install the exact candidate while stable validation is in progress:
+
+```sh
+npm install convex-teams@1.0.0-rc.0
+```
+
+Use Convex `>=1.43.0 <2.0.0`. Mount the component and create a trusted host client as shown in the [getting started guide](https://convex-teams.vercel.app/docs/getting-started).
 
 See [the changelog](CHANGELOG.md) and [release procedure](RELEASING.md) for versioning and release requirements.
 
