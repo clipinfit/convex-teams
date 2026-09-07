@@ -90,3 +90,19 @@ test("delivery provider failures record a safe state", async () => {
   });
   expect(invitations.page[0]?.deliveryState).toBe("failed");
 });
+
+test("concurrent bootstrap returns one personal workspace", async () => {
+  const t = setup();
+  expect(await t.action(internal.proof.concurrentBootstrap, {})).toEqual({
+    personalTeamCount: 1,
+    sameTeamId: true,
+  });
+});
+
+test("concurrent same-user grants return one membership", async () => {
+  const t = setup();
+  expect(await t.action(internal.proof.concurrentDuplicateGrant, {})).toEqual({
+    memberCount: 2,
+    sameMembershipId: true,
+  });
+});

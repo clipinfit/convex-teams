@@ -138,7 +138,7 @@ The package declares `build`, `typecheck`, `lint`, and `test` scripts. Verify th
 ### Phase 1: establish the contract and working baseline
 
 - [x] Inspect the current files and preserve unrelated local work.
-- [ ] Establish Git tracking and the intended repository identity.
+- [x] Establish Git tracking and the intended repository identity. The verified repository is `clipinfit/convex-teams`.
 - [x] Record the decisions listed below.
 - [x] Establish dependencies, tooling, code generation, and a runnable component example.
 - [x] Add runtime tests that reproduce the ownership and fallback findings. Validate capacity rollback and concurrency after the fixes.
@@ -259,3 +259,20 @@ A corrected invite release is a stable-release prerequisite. A downstream npm in
 5. Verify CLIPIN namespace access, source provenance, licence attribution, and the intended remote. Complete clean packed installation, supported-version checks, and release documentation.
 
 No Feedtwin or Pedalclass files were changed. No production data was accessed. No package was published. No commits were created.
+
+
+## Repository and npm checkpoint: 2026-09-07
+
+The user confirmed `clipinfit/convex-teams` as the public repository and requested that the npm name be claimed. This supersedes the proposed scoped package identity. The package name is `convex-teams`.
+
+- Connected `origin` to `git@github.com:clipinfit/convex-teams.git` and pushed `main`.
+- Created checkpoint `df93464`, `feat: establish teams component baseline`.
+- Created checkpoint `c9d2427`, `chore: prepare package identity and versioning`.
+- GitHub CI passed for both checkpoints.
+- Published `convex-teams@0.0.0-development.0` from `release/claim`. npm confirmed the repository and publisher account. Its registry integrity is `sha512-aPoYXuaqK2uMYpRGPhzDX5X1FEHpzKfc0Jx21OoGR8Bs+Kyq10VuiNcaS7CXcFgPqNYMoG1D1/SzP6WzImsZrg==`.
+- The name-claim artifact contains only a development notice, package metadata, and Apache-2.0 licence. It does not publish the unfinished component runtime.
+- Set the source component version to `0.1.0-alpha.0`. Added `CHANGELOG.md`, `RELEASING.md`, package-content checks, and a guard against component publication with dependency patches or uncommitted changes.
+- Added the Apache-2.0 licence text, consistent with the original manifest. Feedtwin source history identifies Denis Ciccale as a contributor. Any remaining third-party source attribution must still be reviewed before the component release.
+- The local backend passed concurrent personal bootstrap with one resulting team and duplicate same-user grants with one resulting membership. The suite now has 18 passing tests.
+
+Remaining release work includes the corrected convex-invite dependency, bounded per-user access reads, the legacy data policy, and the consumer migration rehearsal. Neither the component runtime nor any production migration has been released.
