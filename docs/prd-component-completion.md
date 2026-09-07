@@ -1,7 +1,7 @@
 # Complete convex-teams for application use and CLIPIN OSS
 
 Date: 2026-09-07.
-Status: release candidate `1.0.0-rc.0` published under `next`. Component implementation and development consumer rehearsals are complete. Final registry validation and stable publication remain. Production adoption is separate. See the release audit.
+Status: release candidate `1.0.0-rc.0` published under `next`. Component implementation and development consumer rehearsals are complete. Registry validation passed. Stable version `1.0.0` is prepared for publication. Production adoption is separate. See the release audit.
 
 ## Purpose
 

@@ -34,7 +34,7 @@
     },
     "packages/convex-teams": {
       "name": "convex-teams",
-      "version": "1.0.0-rc.0",
+      "version": "1.0.0",
       "dependencies": {
         "convex-helpers": "^0.1.124",
         "convex-invite": "0.1.1",

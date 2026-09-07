@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0 - 2026-09-07
+
+- Promote the verified release candidate to the first stable version.
+- Verify registry installations on Convex 1.43.0 and 1.45.0 and both consumer rehearsals.
+- Document installation and the boundary between package release and production adoption.
+
 ## 1.0.0-rc.0 - 2026-09-07
 
 - Add trusted current team-state lookup for host resource checks and recovery.

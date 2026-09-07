@@ -34,7 +34,7 @@ export default function Home() {
           <div className="hero-copy">
             <Link href="/docs/release-status" className="release-pill">
               <span />
-              Building toward the first release <ArrowRight size={13} />
+              Release candidate available <ArrowRight size={13} />
             </Link>
             <p className="eyebrow">OPEN SOURCE / CONVEX COMPONENT</p>
             <h1>
@@ -56,8 +56,7 @@ export default function Home() {
               </a>
             </div>
             <p className="availability">
-              Development preview. The npm package currently contains a
-              name-claim notice only.
+              Install the runtime candidate with npm install convex-teams@next.
             </p>
           </div>
           <div
@@ -186,9 +185,9 @@ export default function Home() {
             <p className="eyebrow">DEVELOPED IN THE OPEN</p>
             <h2>Follow the first release.</h2>
             <p>
-              The development API is available in source. Track the remaining
-              dependency, migration, and consumer checks before using it in
-              production.
+              The published candidate passed clean installation and consumer
+              checks. Read the release evidence and the host integration
+              requirements.
             </p>
           </div>
           <Link href="/docs/release-status" className="button primary">

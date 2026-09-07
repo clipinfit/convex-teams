@@ -2,7 +2,7 @@
 
 The first stable target is `1.0.0`, preceded by `1.0.0-rc.0` under the `next` tag. Keep unfinished APIs on a prerelease tag. Move `latest` only after the component and consumer validation plan passes. After 1.0, incompatible API or documented authorization changes require a major version; compatible additions require a minor version and compatible fixes require a patch.
 
-The first name-claim publication received both `development` and `latest` from npm. The registry rejected removal of `latest` with HTTP 400. Both currently identify the notice-only package, not a working component.
+The first name-claim publication received both `development` and `latest` from npm. The registry rejected removal of `latest` with HTTP 400. This describes the historical name claim. Stable publication replaces `latest` with the runtime package.
 
 During `0.x`, use a minor version for incompatible API or schema changes. Use a patch version for compatible fixes. Record every user-visible change in `CHANGELOG.md`. Bump once for each published artifact, not for each checkpoint commit.
 
@@ -28,7 +28,7 @@ Complete npm browser sign-in or 2FA locally when requested. Never commit npm cre
 2. Complete the required PRD tests, the consumer rehearsal, and a clean packed installation.
 3. Update `CHANGELOG.md`. For a subsequent alpha, run `bun run version:alpha`. Review `packages/convex-teams/package.json` and the root `bun.lock`.
 4. Run the checks below. Commit and push the release candidate.
-5. From `packages/convex-teams`, publish with `npm publish --tag alpha --access public`.
+5. From `packages/convex-teams`, publish release candidates with `npm publish --tag next --access public`. Use `alpha` only for alpha versions.
 6. Verify the registry version and integrity. Tag that exact commit as `v<version>` and push the tag.
 
 ```sh
