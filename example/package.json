@@ -1,0 +1,12 @@
+{
+  "name": "teams-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "CONVEX_AGENT_MODE=anonymous convex dev",
+    "codegen": "convex codegen --component-dir ../src/component"
+  },
+  "dependencies": {
+    "convex": "1.43.0"
+  }
+}
