@@ -2,6 +2,9 @@
 
 ## Unreleased: 0.1.0-alpha.0
 
+- Add trusted current team-state lookup for host resource checks and recovery.
+- Verify recovery after ownership changes, removal, and deletion; include attribution notices.
+
 - Bound the Convex peer range to >=1.43.0 <2.0.0 and verify packed consumers on 1.43.0 and 1.45.0.
 
 - Add trusted stable-ID imports with bounded membership batches and durable completion receipts.

@@ -1,0 +1,15 @@
+convex-teams
+Copyright 2026 Denis Ciccale
+
+An independent CLIPIN component, licensed under Apache-2.0.
+
+The component was extracted from the maintainer's Feedtwin team implementation.
+Current runtime dependencies are installed separately through npm:
+
+convex-helpers — Convex, Inc. — Apache-2.0
+https://github.com/get-convex/convex-helpers
+
+convex-invite — Denis Ciccale — Apache-2.0
+https://github.com/dciccale/convex-invite
+
+See each dependency's distributed license and notices for its terms.

@@ -12,6 +12,7 @@ const files = new Set(artifact.files.map((file) => file.path));
 assert.equal(manifest.name, "convex-teams");
 for (const required of [
   "LICENSE",
+  "NOTICE",
   "README.md",
   "CHANGELOG.md",
   "src/test.ts",

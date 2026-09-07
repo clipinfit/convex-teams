@@ -148,30 +148,30 @@ Exit condition: the example runs, and the failing tests demonstrate the current 
 ### Phase 2: complete the shared component
 
 - [x] Fix the reproduced ownership and fallback defects. Enforce current host capacity on invitation and direct grants.
-- [x] Integrate convex-invite and remove duplicate invitation lifecycle code. A tracked dependency patch is required until the invite pagination fix is released.
-- [ ] Remove application-specific payment and generation policies.
-- [ ] Implement bounded cleanup and workspace lifecycle behavior.
+- [x] Integrate convex-invite and remove duplicate invitation lifecycle code. Uses the published convex-invite 0.1.1 fix without a local patch.
+- [x] Remove application-specific payment and generation policies.
+- [x] Implement bounded cleanup and workspace lifecycle behavior.
 - [x] Document and test the host authorization and delivery boundaries.
 
 Exit condition: the required runtime test matrix passes for the shared component.
 
 ### Phase 3: prove consumer migration
 
-- [ ] Complete final API comparison against Feedtwin. An initial source comparison is recorded in `feedtwin-migration-map.md`.
-- [ ] Prepare a migration map for team identifiers, memberships, preferences, pending invitations, projects, and billing references.
-- [ ] Preserve Feedtwin's product-specific project roles and team entitlements in Feedtwin.
-- [ ] Rehearse migration using a local or development fixture. Document rollback and how to avoid duplicate sources of membership truth.
-- [ ] Integrate one real consumer in development and exercise sign-in, switching, invitation acceptance, removal, and deletion.
+- [x] Complete final API comparison against Feedtwin. An initial source comparison is recorded in `feedtwin-migration-map.md`.
+- [x] Prepare a migration map for team identifiers, memberships, preferences, pending invitations, projects, and billing references.
+- [x] Preserve Feedtwin's product-specific project roles and team entitlements in Feedtwin.
+- [x] Rehearse migration using a local or development fixture. Document rollback and how to avoid duplicate sources of membership truth.
+- [x] Integrate one real consumer in development and exercise sign-in, switching, invitation acceptance, removal, and deletion.
 
 Exit condition: a consumer runs against the component and the migration has repeatable validation. Feedtwin is the preferred first proof because the component was extracted from it. Do not change production data as part of the rehearsal.
 
 ### Phase 4: prepare the independent release
 
-- [ ] Finalize CLIPIN package metadata, licence, contribution guidance, security contact, and release instructions.
+- [x] Finalize CLIPIN package metadata, licence, contribution guidance, security contact, and release instructions.
 - [ ] Replace unfinished installation claims in the README with verified examples.
 - [ ] Validate a clean packed installation and supported Convex versions.
 - [x] Add CI for build, type checks, lint, runtime tests, and a package dry run. Clean consumer installation remains a separate release requirement.
-- [ ] Document compatibility and migration limits.
+- [x] Document compatibility and migration limits.
 
 Exit condition: the package is release-ready. Publishing is a separate action from preparing this PRD or implementing its backlog.
 
@@ -429,3 +429,11 @@ The founder clarified that Pedalclass is not in production and Feedtwin has only
 The packed teams artifact passes against actual Pedalclass source in an isolated workspace. All 24 backend tests pass, including a new admin-teammate privacy test for classes, media, and exports. Feedtwin's actual schema and authorization also pass in an isolated copy, followed by a native local backend comparison. Feedtwin needs a Convex upgrade from its installed 1.31.7; the rehearsal uses 1.45.0. No consumer files or production data were changed.
 
 Packed consumer checks pass at Convex 1.43.0 and 1.45.0. The peer range now excludes untested future major versions. See [consumer release evidence](consumer-release-evidence.md) for aggregate counts, invitation policy, reproducible commands, and validation limits. Production cutover remains distinct from release validation.
+
+## Recovery and release preparation checkpoint: 2026-09-07
+
+The trusted `getTeamState` query returns current workspace metadata or null for missing/deleted workspaces. It grants no resource access. Recovery uses this query to preserve current ownership and membership, revoke pending invitations, and keep deleted teams unavailable. Previous source memberships remain in durable recovery receipts. The bounded example handles up to 100 memberships and pending invitations per team. Its transaction tests and native backend proof pass. See [recovery procedure](recovery-procedure.md).
+
+The native Feedtwin development copy now exercises authenticated selection, verified invitation acceptance, member removal, stale-token rejection, ownership transfer, and deletion. This meets the development-consumer rehearsal gate. It does not switch production traffic or replace production host adapters.
+
+Contribution guidance, attribution notices, and a private security-reporting channel are in place. GitHub private vulnerability reporting is enabled. Root and package licenses remain Apache-2.0, and the package includes NOTICE. Source history attributes the baseline to the maintainer; runtime dependency metadata identifies both dependencies as Apache-2.0.
