@@ -42,9 +42,11 @@ bunx convex run proof:concurrentBootstrap
 bunx convex run proof:concurrentDuplicateGrant
 bunx convex run proof:largeSeatLimit
 bunx convex run proof:concurrentSlugs
+bunx convex run migrationProof:run
+bunx convex run migrationProof:runLifecycle
 ```
 
-The seat proof must return one successful grant, one rejected grant, and two members. The bootstrap proof must create one personal team. The duplicate grant proof must create one membership for the recipient. The large-limit proof must return two members. The slug proof must return two distinct slugs within the length limit.
+The seat proof must return one successful grant, one rejected grant, and two members. The bootstrap proof must create one personal team. The duplicate grant proof must create one membership for the recipient. The large-limit proof must return two members. The slug proof must return two distinct slugs within the length limit. The import proof checks two synthetic teams. The lifecycle proof completes without error after preference translation, removal fallback, invitation acceptance, ownership transfer, and deletion.
 
 ## How the example mounts teams
 

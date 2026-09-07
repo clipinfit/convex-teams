@@ -50,6 +50,7 @@ bunx convex run proof:concurrentDuplicateGrant
 bunx convex run proof:largeSeatLimit
 bunx convex run proof:concurrentSlugs
 bunx convex run migrationProof:run
+bunx convex run migrationProof:runLifecycle
 ```
 
 The proof creates a development fixture. One direct grant and one invitation acceptance compete for the final seat. The expected result is one successful grant, one rejected grant, and two members.

@@ -15,22 +15,24 @@ export const setup = internalMutation({
   returns: v.array(v.id("migrationSources")),
   handler: async (ctx) => {
     const ids = [];
+    const runId = crypto.randomUUID();
     for (let i = 0; i < 2; i++) {
       const suffix = crypto.randomUUID();
       const teamPublicId = `feedtwin-${suffix}`;
       const sourceId = await ctx.db.insert("migrationSources", {
         teamPublicId,
         teamSlug: `migration-${suffix}`,
-        ownerUserId: `owner-${i}`,
+        ownerUserId: `owner-${i}-${runId}`,
         members: [
-          { userId: `owner-${i}`, role: "owner" },
-          { userId: `member-${i}`, role: "member" },
+          { userId: `owner-${i}-${runId}`, role: "owner" },
+          { userId: `member-${i}-${runId}`, role: "member" },
+          { userId: `shared-${runId}`, role: "member" },
         ],
       });
       await ctx.db.insert("migrationProjects", {
         sourceTeamId: sourceId,
         creatorUserId: `creator-${i}`,
-        projectOnlyUserId: `guest-${i}`,
+        projectOnlyUserId: `guest-${i}-${runId}`,
         billingPublicId: teamPublicId,
       });
       ids.push(sourceId);
@@ -166,5 +168,197 @@ export const run = internalAction({
       await ctx.runQuery(internal.migrationProof.verify, { sourceId });
     }
     return { teams: sources.length, repeatable: true, accessPreserved: true };
+  },
+});
+
+/** Translate one source preference transactionally. Project-only selections stay host-owned. */
+export const migratePreferences = internalMutation({
+  args: { preferenceId: v.id("migrationPreferences") },
+  returns: v.null(),
+  handler: async (ctx, { preferenceId }) => {
+    const preference = await ctx.db.get(preferenceId);
+    if (!preference) throw new Error("Missing source preference.");
+    if (preference.applied) return null;
+    for (const kind of ["default", "active"] as const) {
+      const sourceId =
+        kind === "default"
+          ? preference.defaultSourceId
+          : preference.activeSourceId;
+      const source = await ctx.db.get(sourceId);
+      const mapping = await ctx.db
+        .query("migrationMappings")
+        .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+        .unique();
+      if (!source || !mapping)
+        throw new Error(
+          "Preference migration requires completed team mappings.",
+        );
+      const member = await teams.getTeamBySlug(
+        ctx,
+        preference.userId,
+        source.teamSlug,
+      );
+      if (!member) continue;
+      if (member.teamId !== mapping.componentTeamId)
+        throw new Error("Preference mapping mismatch.");
+      if (kind === "default")
+        await teams.setDefaultTeam(
+          ctx,
+          preference.userId,
+          mapping.componentTeamId,
+        );
+      else await teams.setActiveTeam(ctx, preference.userId, source.teamSlug);
+    }
+    await ctx.db.patch(preferenceId, { applied: true });
+    return null;
+  },
+});
+
+export const setupPreferences = internalMutation({
+  args: {
+    firstId: v.id("migrationSources"),
+    secondId: v.id("migrationSources"),
+  },
+  returns: v.object({
+    memberPreferenceId: v.id("migrationPreferences"),
+    guestPreferenceId: v.id("migrationPreferences"),
+  }),
+  handler: async (ctx, { firstId, secondId }) => {
+    const first = await ctx.db.get(firstId);
+    const second = await ctx.db.get(secondId);
+    const project = await ctx.db
+      .query("migrationProjects")
+      .withIndex("by_sourceTeamId", (q) => q.eq("sourceTeamId", firstId))
+      .unique();
+    const shared = first?.members.find((member) =>
+      second?.members.some((other) => other.userId === member.userId),
+    );
+    if (!shared || !project) throw new Error("Missing shared fixture member.");
+    const memberPreferenceId = await ctx.db.insert("migrationPreferences", {
+      userId: shared.userId,
+      defaultSourceId: secondId,
+      activeSourceId: firstId,
+      applied: false,
+    });
+    const guestPreferenceId = await ctx.db.insert("migrationPreferences", {
+      userId: project.projectOnlyUserId,
+      defaultSourceId: firstId,
+      activeSourceId: firstId,
+      applied: false,
+    });
+    return { memberPreferenceId, guestPreferenceId };
+  },
+});
+
+/** Exercise real component lifecycle operations against imported records. */
+export const lifecycle = internalMutation({
+  args: {
+    memberPreferenceId: v.id("migrationPreferences"),
+    guestPreferenceId: v.id("migrationPreferences"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const preference = await ctx.db.get(args.memberPreferenceId);
+    const guest = await ctx.db.get(args.guestPreferenceId);
+    if (!preference?.applied || !guest?.applied)
+      throw new Error("Preferences must be migrated first.");
+    const first = await ctx.db.get(preference.activeSourceId);
+    const second = await ctx.db.get(preference.defaultSourceId);
+    if (!first || !second) throw new Error("Missing source teams.");
+    const active = await teams.getActiveTeam(ctx, preference.userId);
+    const home = await teams.getDefaultTeam(ctx, preference.userId);
+    if (
+      active?.teamPublicId !== first.teamPublicId ||
+      home?.teamPublicId !== second.teamPublicId
+    )
+      throw new Error("Source preferences were not preserved.");
+    if (await teams.getActiveTeam(ctx, guest.userId))
+      throw new Error("Project-only preference granted team access.");
+    await teams.removeMember(ctx, {
+      userId: first.ownerUserId,
+      teamSlug: first.teamSlug,
+      targetUserId: preference.userId,
+    });
+    if (
+      (await teams.getActiveTeam(ctx, preference.userId))?.teamPublicId !==
+      second.teamPublicId
+    )
+      throw new Error(
+        "Removed member did not fall back to the remaining team.",
+      );
+    const email = `${crypto.randomUUID()}@example.com`;
+    const recipient = crypto.randomUUID();
+    const invite = await teams.createInvite(ctx, {
+      userId: first.ownerUserId,
+      teamSlug: first.teamSlug,
+      email,
+      role: "member",
+    });
+    await teams.acceptInvite(ctx, {
+      userId: recipient,
+      email,
+      token: invite.token,
+      seatLimit: 3,
+    });
+    await teams.acceptInvite(ctx, {
+      userId: recipient,
+      email,
+      token: invite.token,
+      seatLimit: 3,
+    });
+    await teams.transferOwnership(ctx, {
+      userId: first.ownerUserId,
+      teamSlug: first.teamSlug,
+      targetUserId: recipient,
+    });
+    if (
+      (await teams.getTeamBySlug(ctx, recipient, first.teamSlug))?.role !==
+      "owner"
+    )
+      throw new Error("Ownership transfer failed.");
+    await teams.deleteTeam(ctx, recipient, first.teamPublicId);
+    if (await teams.getTeamBySlug(ctx, recipient, first.teamSlug))
+      throw new Error("Deleted team still grants access.");
+    // Keep host content and billing evidence for explicit cleanup and reconciliation.
+    const project = await ctx.db
+      .query("migrationProjects")
+      .withIndex("by_sourceTeamId", (q) => q.eq("sourceTeamId", first._id))
+      .unique();
+    if (!project || project.billingPublicId !== first.teamPublicId)
+      throw new Error("Host evidence was deleted.");
+    return null;
+  },
+});
+
+export const runLifecycle = internalAction({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const sources = await ctx.runMutation(internal.migrationProof.setup, {});
+    const [firstId, secondId] = sources;
+    if (!firstId || !secondId) throw new Error("Missing fixture teams.");
+    for (const sourceId of sources)
+      await ctx.runMutation(internal.migrationProof.migrate, { sourceId });
+    const preferences = await ctx.runMutation(
+      internal.migrationProof.setupPreferences,
+      { firstId, secondId },
+    );
+    for (const preferenceId of [
+      preferences.memberPreferenceId,
+      preferences.guestPreferenceId,
+    ]) {
+      await ctx.runMutation(internal.migrationProof.migratePreferences, {
+        preferenceId,
+      });
+      await ctx.runMutation(internal.migrationProof.migratePreferences, {
+        preferenceId,
+      });
+    }
+    await ctx.runMutation(internal.migrationProof.lifecycle, preferences);
+    // A stale preference replay cannot restore access or overwrite the fallback.
+    await ctx.runMutation(internal.migrationProof.migratePreferences, {
+      preferenceId: preferences.memberPreferenceId,
+    });
+    return null;
   },
 });

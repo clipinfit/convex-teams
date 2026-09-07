@@ -411,3 +411,13 @@ The initial synthetic Feedtwin fixture passed in `convex-test` and on the local 
 This is an initial fixture, not a completed consumer migration. Next checks are preference translation, legacy invitation policy, lifecycle behavior on migrated records, recovery after new writes, and Pedalclass private-content fixtures. No consumer source or deployed data changed. The teams runtime remains unpublished.
 
 Checkpoint validation: 34 component and host tests pass. Type checks, lint, 44 documentation links, production build, package-content checks, and the registry-only packed consumer smoke check pass. Convex CLI regenerated the component and host declarations.
+
+## Preference and lifecycle checkpoint: 2026-09-07
+
+The synthetic Feedtwin host fixture now translates active and default preferences through the durable ID mapping. It skips project-only selections and records application once. A retry does not overwrite a later user selection. Missing mappings abort migration. The existing teams API was sufficient; no new component API or package version was needed.
+
+The imported-team lifecycle proof passes in convex-test and on the native local backend. It covers a shared member's fallback after removal, repeated new invitation acceptance, ownership transfer, deletion, and retention of host content and billing evidence. Unique fixture identities prevent previous runs from affecting preference results. All 36 component and host tests, type checks, and lint pass.
+
+The recovery check shows that the retained source becomes stale after destination membership changes. Source comparison rejects the changed destination. Reverse reconciliation and safe recovery after new writes remain unimplemented. This checkpoint does not resolve legacy invitation policy or complete a real consumer migration.
+
+Next: Pedalclass private-content fixtures, legacy invitation inventory and policy, reverse reconciliation, a real development consumer rehearsal, and final attribution and supported-version checks. Runtime publication remains pending.

@@ -1,6 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 export default defineSchema({
+  migrationPreferences: defineTable({
+    userId: v.string(),
+    defaultSourceId: v.id("migrationSources"),
+    activeSourceId: v.id("migrationSources"),
+    applied: v.boolean(),
+  }),
   migrationSources: defineTable({
     teamPublicId: v.string(),
     teamSlug: v.string(),

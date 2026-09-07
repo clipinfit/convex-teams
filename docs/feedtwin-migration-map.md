@@ -43,4 +43,14 @@ The teams runtime is partly implemented. Per-user lists, seat checks, and slug a
 
 This fixture uses small snapshots that fit one mutation. Real imports must split large membership sets into batches of at most 100. The component tests cover 202 memberships across repeated batches. A completed import returns `complete`; callers then skip all membership batches. Calling `importMembers` after completion fails, which prevents stale grants after member removal.
 
-The source records remain intact for recovery before cutover. This is not a rollback rehearsal after new component writes. Preferences, invitation policy, lifecycle checks against the migrated fixture, reverse reconciliation, and a real development consumer deployment remain open.
+The source records remain intact for recovery before cutover. This is not a rollback rehearsal after new component writes. Invitation policy, reverse reconciliation, and a real development consumer deployment remain open. Preference and lifecycle fixture checks are recorded below.
+
+## Preference and lifecycle fixture: 2026-09-07
+
+`migrationProof:migratePreferences` translates one source preference through completed host ID mappings. It uses the existing component membership checks and preference setters. A host receipt makes replay a no-op after application. Later user selections remain intact. Missing mappings abort the transaction. Project-only selections remain in the host source records; they do not become component preferences or team memberships.
+
+`migrationProof:runLifecycle` imports two teams with one shared member. It preserves a different active and default workspace, then removes the member from the active team. The member falls back to the remaining team. The proof accepts a new invitation twice, transfers ownership, deletes the imported team, and verifies immediate team access denial. Host content and billing references remain available for explicit cleanup. This uses new child invitations, not migrated legacy tokens.
+
+The fixture uses a unique user namespace per run so old development preferences cannot affect results. Run the lifecycle proof from `packages/example-backend` after starting local Convex. It returns null on success.
+
+Recovery evidence: the retained source still contains the membership removed after migration. The source/destination comparison rejects that changed destination. Switching back to the source would restore stale authority. This proves the need for reconciliation; it does not implement reverse migration. Source comparison does not cover every product authorization rule.
