@@ -1,6 +1,8 @@
 # Release convex-teams
 
-The source package starts at `0.1.0-alpha.0`. Keep unfinished APIs on the `alpha` distribution tag. Use `latest` only for a release that passes the full component and consumer validation plan.
+The source package starts at `0.1.0-alpha.0`. Keep unfinished component APIs on the `alpha` distribution tag. Move `latest` to a component release only after the full component and consumer validation plan passes.
+
+The first name-claim publication received both `development` and `latest` from npm. The registry rejected removal of `latest` with HTTP 400. Both currently identify the notice-only package, not a working component.
 
 During `0.x`, use a minor version for incompatible API or schema changes. Use a patch version for compatible fixes. Record every user-visible change in `CHANGELOG.md`. Bump once for each published artifact, not for each checkpoint commit.
 

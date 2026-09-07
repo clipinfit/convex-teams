@@ -270,9 +270,12 @@ The user confirmed `clipinfit/convex-teams` as the public repository and request
 - Created checkpoint `c9d2427`, `chore: prepare package identity and versioning`.
 - GitHub CI passed for both checkpoints.
 - Published `convex-teams@0.0.0-development.0` from `release/claim`. npm confirmed the repository and publisher account. Its registry integrity is `sha512-aPoYXuaqK2uMYpRGPhzDX5X1FEHpzKfc0Jx21OoGR8Bs+Kyq10VuiNcaS7CXcFgPqNYMoG1D1/SzP6WzImsZrg==`.
+- Tagged the claim source commit `c9d2427` as `v0.0.0-development.0` and pushed the tag. npm assigned both `development` and `latest`; removal of `latest` was rejected with HTTP 400. Both tags still refer to the notice-only artifact.
 - The name-claim artifact contains only a development notice, package metadata, and Apache-2.0 licence. It does not publish the unfinished component runtime.
 - Set the source component version to `0.1.0-alpha.0`. Added `CHANGELOG.md`, `RELEASING.md`, package-content checks, and a guard against component publication with dependency patches or uncommitted changes.
 - Added the Apache-2.0 licence text, consistent with the original manifest. Feedtwin source history identifies Denis Ciccale as a contributor. Any remaining third-party source attribution must still be reviewed before the component release.
 - The local backend passed concurrent personal bootstrap with one resulting team and duplicate same-user grants with one resulting membership. The suite now has 18 passing tests.
 
 Remaining release work includes the corrected convex-invite dependency, bounded per-user access reads, the legacy data policy, and the consumer migration rehearsal. Neither the component runtime nor any production migration has been released.
+
+Checkpoint `06562a9`, `test: verify concurrent workspace provisioning`, adds the two new concurrency checks and records the publication.
