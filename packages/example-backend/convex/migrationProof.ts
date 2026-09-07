@@ -362,3 +362,181 @@ export const runLifecycle = internalAction({
     return null;
   },
 });
+
+/** Small-consumer recovery rehearsal. Freeze both writers before invoking it. */
+export const reconcileSource = internalMutation({
+  args: { sourceId: v.id("migrationSources") },
+  returns: v.null(),
+  handler: async (ctx, { sourceId }) => {
+    const source = await ctx.db.get(sourceId);
+    const mapping = await ctx.db
+      .query("migrationMappings")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!source || !mapping || source.teamPublicId !== mapping.teamPublicId)
+      throw new Error("Recovery requires a valid mapping.");
+    const previous = await ctx.db
+      .query("migrationRecovery")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (previous) return null;
+    const state = await teams.getTeamState(ctx, mapping.teamPublicId);
+    if (state && state.teamId !== mapping.componentTeamId)
+      throw new Error("Recovery destination changed.");
+    const page = state
+      ? await teams.listMembers(ctx, state.ownerUserId, state.teamSlug, {
+          numItems: 100,
+          cursor: null,
+        })
+      : null;
+    if (state && (!page || !page.isDone))
+      throw new Error("Recovery fixture requires at most 100 members.");
+    const members =
+      page?.page.map((member) => ({
+        userId: member.userId,
+        role: member.role,
+      })) ?? [];
+    if (
+      state &&
+      (members.filter((member) => member.role === "owner").length !== 1 ||
+        !members.some(
+          (member) =>
+            member.role === "owner" && member.userId === state.ownerUserId,
+        ))
+    )
+      throw new Error("Recovery ownership mismatch.");
+    if (state) {
+      const pending = await teams.listPendingInvites(
+        ctx,
+        state.ownerUserId,
+        state.teamSlug,
+        { numItems: 100, cursor: null },
+      );
+      if (!pending.isDone)
+        throw new Error(
+          "Recovery fixture requires at most 100 pending invitations.",
+        );
+      for (const invite of pending.page)
+        await teams.revokeInvite(ctx, state.ownerUserId, invite.inviteId);
+    }
+    await ctx.db.insert("migrationRecovery", {
+      sourceId,
+      previousMembers: source.members,
+      previousOwnerUserId: source.ownerUserId,
+      appliedAt: Date.now(),
+    });
+    await ctx.db.patch(sourceId, {
+      members,
+      ownerUserId: state?.ownerUserId ?? source.ownerUserId,
+      teamSlug: state?.teamSlug ?? source.teamSlug,
+      recoveredStatus: state ? "active" : "deleted",
+    });
+    return null;
+  },
+});
+
+export const mutateRecoveryFixture = internalMutation({
+  args: { sourceId: v.id("migrationSources"), deleted: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, { sourceId, deleted }) => {
+    const source = await ctx.db.get(sourceId);
+    const mapping = await ctx.db
+      .query("migrationMappings")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!source || !mapping) throw new Error("Missing recovery fixture.");
+    if (deleted) {
+      await teams.deleteTeam(ctx, source.ownerUserId, source.teamPublicId);
+    } else {
+      const successor = crypto.randomUUID();
+      await teams.addMember(ctx, {
+        teamId: mapping.componentTeamId,
+        userId: successor,
+        role: "member",
+      });
+      await teams.transferOwnership(ctx, {
+        userId: source.ownerUserId,
+        teamSlug: source.teamSlug,
+        targetUserId: successor,
+      });
+      await teams.removeMember(ctx, {
+        userId: successor,
+        teamSlug: source.teamSlug,
+        targetUserId: source.ownerUserId,
+      });
+      await teams.createInvite(ctx, {
+        userId: successor,
+        teamSlug: source.teamSlug,
+        email: `${crypto.randomUUID()}@example.com`,
+        role: "member",
+      });
+    }
+    return null;
+  },
+});
+
+export const verifyRecovery = internalQuery({
+  args: { sourceId: v.id("migrationSources") },
+  returns: v.null(),
+  handler: async (ctx, { sourceId }) => {
+    const source = await ctx.db.get(sourceId);
+    const receipt = await ctx.db
+      .query("migrationRecovery")
+      .withIndex("by_sourceId", (q) => q.eq("sourceId", sourceId))
+      .unique();
+    if (!source || !receipt) throw new Error("Recovery not applied.");
+    const state = await teams.getTeamState(ctx, source.teamPublicId);
+    if (!state) {
+      if (source.recoveredStatus !== "deleted" || source.members.length)
+        throw new Error("Recovery restored deleted access.");
+      return null;
+    }
+    const page = await teams.listMembers(
+      ctx,
+      state.ownerUserId,
+      state.teamSlug,
+      { numItems: 100, cursor: null },
+    );
+    if (!page?.isDone) throw new Error("Incomplete recovery comparison.");
+    const pending = await teams.listPendingInvites(
+      ctx,
+      state.ownerUserId,
+      state.teamSlug,
+      { numItems: 100, cursor: null },
+    );
+    if (pending.page.length)
+      throw new Error("Recovery left an outstanding invitation.");
+    const sorted = (members: Array<{ userId: string; role: string }>) =>
+      members.map((member) => `${member.userId}:${member.role}`).sort();
+    if (
+      source.ownerUserId !== state.ownerUserId ||
+      JSON.stringify(sorted(source.members)) !==
+        JSON.stringify(sorted(page.page))
+    )
+      throw new Error("Recovered access differs from destination.");
+    return null;
+  },
+});
+
+export const runRecovery = internalAction({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const sources = await ctx.runMutation(internal.migrationProof.setup, {});
+    for (const [index, sourceId] of sources.entries()) {
+      await ctx.runMutation(internal.migrationProof.migrate, { sourceId });
+      await ctx.runMutation(internal.migrationProof.mutateRecoveryFixture, {
+        sourceId,
+        deleted: index === 1,
+      });
+      await ctx.runMutation(internal.migrationProof.reconcileSource, {
+        sourceId,
+      });
+      await ctx.runMutation(internal.migrationProof.reconcileSource, {
+        sourceId,
+      });
+      await ctx.runQuery(internal.migrationProof.verifyRecovery, { sourceId });
+    }
+    return null;
+  },
+});

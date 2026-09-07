@@ -49,6 +49,7 @@ bunx convex run proof:largeSeatLimit
 bunx convex run proof:concurrentSlugs
 bunx convex run migrationProof:run
 bunx convex run migrationProof:runLifecycle
+bunx convex run migrationProof:runRecovery
 ```
 
 The proof creates a development fixture. One direct grant and one invitation acceptance compete for the final seat. The expected result is one successful grant, one rejected grant, and two members.
@@ -144,3 +145,5 @@ See [the completion PRD](https://github.com/clipinfit/convex-teams/blob/main/doc
 Keep membership writes paused and delay consumer cutover until all batches and access comparisons pass. Imported teams are active immediately; the component does not enforce the host migration freeze. Store the old-host-ID to component-ID mapping in the host. Keep project-only memberships, billing references, and content ownership in the host.
 
 Open batches are repeatable with identical roles. Conflicts fail the whole batch. Once complete, skip batch replay. Durable receipts prevent a completed import from restoring removed members or recreating a deleted team. Retain the source snapshot and receipts. Imports do not migrate preferences, invitations, or source timestamps. See the [migration contract](https://convex-teams.vercel.app/docs/host-contract).
+
+`getTeamState(ctx, teamPublicId)` is a trusted host lookup of current workspace metadata. Missing or deleted teams return null. A returned record is not an access grant. The host must apply its membership or resource-specific permission rules.

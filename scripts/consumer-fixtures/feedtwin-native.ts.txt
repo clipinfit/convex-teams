@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { TeamsClient } from "convex-teams";
 import { components } from "./_generated/api";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, query, mutation } from "./_generated/server";
 import { assertProjectAccessForTeam } from "./lib/auth";
 const teams = new TeamsClient(components.teams);
 export const setup = internalMutation({
@@ -32,5 +32,56 @@ export const compare = query({
     const imported = await teams.getTeamBySlug(ctx, identity.subject, args.teamSlug);
     if (!imported || imported.role !== source.teamRole) throw new Error("Authorization changed.");
     return true;
+  },
+});
+export const select = mutation({
+  args: { teamSlug: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    await teams.setActiveTeam(ctx, identity.subject, args.teamSlug);
+    const active = await teams.getActiveTeam(ctx, identity.subject);
+    if (active?.slug !== args.teamSlug) throw new Error("Selection failed");
+    return active;
+  },
+});
+export const issue = mutation({
+  args: { teamSlug: v.string(), email: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    return await teams.createInvite(ctx, { userId: identity.subject, ...args, role: "member" });
+  },
+});
+export const accept = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.email || identity.emailVerified !== true) throw new Error("Verified email required");
+    return await teams.acceptInvite(ctx, { userId: identity.subject, email: identity.email, token: args.token, seatLimit: 2 });
+  },
+});
+export const remove = mutation({
+  args: { teamSlug: v.string(), targetUserId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    return await teams.removeMember(ctx, { userId: identity.subject, ...args });
+  },
+});
+export const transfer = mutation({
+  args: { teamSlug: v.string(), targetUserId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    return await teams.transferOwnership(ctx, { userId: identity.subject, ...args });
+  },
+});
+export const removeTeam = mutation({
+  args: { teamPublicId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    return await teams.deleteTeam(ctx, identity.subject, args.teamPublicId);
   },
 });

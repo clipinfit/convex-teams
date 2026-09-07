@@ -47,10 +47,10 @@ The package peer range is `>=1.43.0 <2.0.0`. The packed consumer check passes on
 
 Run `node scripts/rehearse-consumer.mjs feedtwin`. The isolated copy mounts teams alongside Feedtwin's Stripe, rate limiter, and Resend components. It upgrades Convex to 1.45.0 only in the temporary copy.
 
-A four-team, six-membership fixture matches the observed production shape with synthetic values. It uses Feedtwin's actual schema and `assertProjectAccessForTeam` implementation. Repeated imports preserve IDs and roles. A native anonymous backend also mounts the full consumer, imports a team twice, and checks owner access and outsider denial through a public test query. The temporary issuer is a synthetic domain. Both the source test and native check pass.
+A four-team, six-membership fixture matches the observed production shape with synthetic values. It uses Feedtwin's actual schema and `assertProjectAccessForTeam` implementation. Repeated imports preserve IDs and roles. A native anonymous backend also mounts the full consumer, imports a team twice, and checks owner access and outsider denial through a public test query. The temporary issuer is a synthetic domain. Both the source test and native check pass. Native checks also cover authenticated workspace selection, verified invitation acceptance, removal, stale-token rejection, ownership transfer, and deletion.
 
 This is a shadow comparison in an actual consumer development copy. It does not replace all Feedtwin membership reads or route production traffic to teams. Production cutover still needs the host adapters and the recorded migration procedure.
 
 ## Remaining work
 
-Finish recovery reconciliation, final release candidate checks, and publication. The consumer rehearsals do not switch production traffic to the component.
+Recovery reconciliation is exercised by `migrationProof:runRecovery`; see [recovery procedure](recovery-procedure.md). Final release candidate checks and publication remain. The consumer rehearsals do not switch production traffic to the component.

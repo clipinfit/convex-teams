@@ -42,6 +42,10 @@ export class TeamsClient {
   getTeamBySlug(ctx: QueryCtx, userId: string, teamSlug: string) {
     return ctx.runQuery(this.component.teams.getBySlug, { userId, teamSlug });
   }
+  /** Trusted host metadata lookup. The host must still authorize resource access. */
+  getTeamState(ctx: QueryCtx, teamPublicId: string) {
+    return ctx.runQuery(this.component.teams.getTeamState, { teamPublicId });
+  }
   getActiveTeam(ctx: QueryCtx, userId: string) {
     return ctx.runQuery(this.component.teams.getActiveTeam, { userId });
   }

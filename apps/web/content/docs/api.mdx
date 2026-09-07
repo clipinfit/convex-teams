@@ -12,6 +12,7 @@ The API targets an unpublished alpha. Signatures can change before release. See 
 | Method | Arguments after `ctx` | Purpose |
 | --- | --- | --- |
 | `listTeams` | `userId, paginationOpts` | Page through accessible teams. |
+| `getTeamState` | `teamPublicId` | Trusted host lookup of live metadata. Does not grant resource access. |
 | `getTeamBySlug` | `userId, teamSlug` | Read an accessible team. |
 | `getActiveTeam` | `userId` | Resolve the active preference. |
 | `getDefaultTeam` | `userId` | Resolve the default preference. |

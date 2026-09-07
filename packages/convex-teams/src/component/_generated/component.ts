@@ -263,6 +263,20 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      getTeamState: FunctionReference<
+        "query",
+        "internal",
+        { teamPublicId: string },
+        null | {
+          ownerUserId: string;
+          status: "active" | "pending_payment";
+          teamId: string;
+          teamName: string;
+          teamPublicId: string;
+          teamSlug: string;
+        },
+        Name
+      >;
       leaveTeam: FunctionReference<
         "mutation",
         "internal",

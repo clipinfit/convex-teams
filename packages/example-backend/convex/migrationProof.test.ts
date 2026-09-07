@@ -100,3 +100,28 @@ test("preference retries preserve later user selection and missing mappings abor
     )?.teamPublicId,
   ).toBe(second.teamPublicId);
 });
+
+test("recovery reconciles removed owners and deleted teams without restoring stale grants", async () => {
+  const t = convexTest(schema, import.meta.glob("./**/*.ts"));
+  register(t);
+  await t.action(internal.migrationProof.runRecovery, {});
+  const receipts = await t.run((ctx) =>
+    ctx.db.query("migrationRecovery").collect(),
+  );
+  expect(receipts).toHaveLength(2);
+  for (const receipt of receipts) {
+    expect(
+      receipt.previousMembers.some(
+        (member) =>
+          member.role === "owner" &&
+          member.userId === receipt.previousOwnerUserId,
+      ),
+    ).toBe(true);
+    const source = await t.run((ctx) => ctx.db.get(receipt.sourceId));
+    expect(
+      source?.members.some(
+        (member) => member.userId === receipt.previousOwnerUserId,
+      ),
+    ).toBe(false);
+  }
+});

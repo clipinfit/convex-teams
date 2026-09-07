@@ -160,8 +160,87 @@ try {
       denied = String(error.stderr).includes("Not authorized");
     }
     if (!denied) throw new Error("Native Feedtwin outsider check failed.");
+    const ownerIdentity = { subject: "rehearsal-owner" };
+    const recipientIdentity = {
+      subject: "rehearsal-member",
+      email: "rehearsal@example.com",
+      emailVerified: true,
+    };
+    function invoke(name, args, identity) {
+      return JSON.parse(
+        run(
+          "bunx",
+          [
+            "convex",
+            "run",
+            `teamsRehearsal:${name}`,
+            JSON.stringify(args),
+            "--identity",
+            JSON.stringify(identity),
+          ],
+          backend,
+        ),
+      );
+    }
+    function requireDenial(name, args, identity) {
+      let rejected = false;
+      try {
+        invoke(name, args, identity);
+      } catch (error) {
+        const expected =
+          name === "select"
+            ? /Not authorized|Team not found/
+            : identity.emailVerified === false
+              ? /Verified email required/
+              : /Membership no longer exists/;
+        rejected = expected.test(String(error.stderr));
+      }
+      if (!rejected)
+        throw new Error(`Expected ${name} to reject the identity.`);
+    }
+    const active = invoke(
+      "select",
+      { teamSlug: fixture.teamSlug },
+      ownerIdentity,
+    );
+    const invite = invoke(
+      "issue",
+      { teamSlug: fixture.teamSlug, email: recipientIdentity.email },
+      ownerIdentity,
+    );
+    requireDenial(
+      "accept",
+      { token: invite.token },
+      { ...recipientIdentity, emailVerified: false },
+    );
+    invoke("accept", { token: invite.token }, recipientIdentity);
+    invoke("select", { teamSlug: fixture.teamSlug }, recipientIdentity);
+    invoke(
+      "remove",
+      { teamSlug: fixture.teamSlug, targetUserId: recipientIdentity.subject },
+      ownerIdentity,
+    );
+    requireDenial("select", { teamSlug: fixture.teamSlug }, recipientIdentity);
+    requireDenial("accept", { token: invite.token }, recipientIdentity);
+    const replacement = invoke(
+      "issue",
+      { teamSlug: fixture.teamSlug, email: recipientIdentity.email },
+      ownerIdentity,
+    );
+    invoke("accept", { token: replacement.token }, recipientIdentity);
+    invoke(
+      "transfer",
+      { teamSlug: fixture.teamSlug, targetUserId: recipientIdentity.subject },
+      ownerIdentity,
+    );
+    invoke(
+      "removeTeam",
+      { teamPublicId: active.teamPublicId },
+      recipientIdentity,
+    );
+    requireDenial("select", { teamSlug: fixture.teamSlug }, recipientIdentity);
     console.log(
-      "Native Feedtwin backend: owner allowed, outsider denied; import repeatable.",
+      "Native Feedtwin backend: identity, selection, verified acceptance, removal, transfer and deletion passed.",
     );
   }
 

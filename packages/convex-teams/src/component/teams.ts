@@ -1270,3 +1270,34 @@ export const countMembershipsInternal = internalMutation({
     return null;
   },
 });
+
+/** Trusted host lookup for resource-specific access and migration checks. Not an access grant. */
+export const getTeamState = query({
+  args: { teamPublicId: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      teamId: v.id("teams"),
+      teamPublicId: v.string(),
+      teamSlug: v.string(),
+      teamName: v.string(),
+      ownerUserId: v.string(),
+      status: v.union(v.literal("active"), v.literal("pending_payment")),
+    }),
+  ),
+  handler: async (ctx, { teamPublicId }) => {
+    const team = await ctx.db
+      .query("teams")
+      .withIndex("by_teamPublicId", (q) => q.eq("teamPublicId", teamPublicId))
+      .unique();
+    if (!team || team.status === "deleted") return null;
+    return {
+      teamId: team._id,
+      teamPublicId,
+      teamSlug: team.teamSlug,
+      teamName: team.teamName,
+      ownerUserId: team.ownerUserId,
+      status: team.status,
+    };
+  },
+});

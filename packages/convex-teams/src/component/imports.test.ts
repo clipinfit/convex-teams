@@ -188,3 +188,60 @@ test("imports validate counts and identifiers and preserve personal classificati
     }),
   ).rejects.toThrow("Personal workspace");
 });
+
+test("trusted team state follows ownership and denies deleted workspace state", async () => {
+  vi.useFakeTimers();
+  try {
+    const t = setup();
+    expect(
+      await t.query(api.teams.getTeamState, { teamPublicId: "missing" }),
+    ).toBeNull();
+    const team = await t.mutation(api.imports.begin, {
+      ...snapshot,
+      expectedMemberCount: 2,
+    });
+    await t.mutation(api.imports.members, {
+      teamPublicId: snapshot.teamPublicId,
+      members: [{ userId: "successor", role: "member" }],
+    });
+    await t.mutation(api.imports.finish, {
+      teamPublicId: snapshot.teamPublicId,
+    });
+    expect(
+      (
+        await t.query(api.teams.getTeamState, {
+          teamPublicId: snapshot.teamPublicId,
+        })
+      )?.teamId,
+    ).toBe(team.teamId);
+    await t.mutation(api.teams.transferOwnership, {
+      userId: "owner",
+      teamSlug: snapshot.teamSlug,
+      targetUserId: "successor",
+    });
+    expect(
+      (
+        await t.query(api.teams.getTeamState, {
+          teamPublicId: snapshot.teamPublicId,
+        })
+      )?.ownerUserId,
+    ).toBe("successor");
+    await t.mutation(api.teams.deleteTeam, {
+      userId: "successor",
+      teamPublicId: snapshot.teamPublicId,
+    });
+    expect(
+      await t.query(api.teams.getTeamState, {
+        teamPublicId: snapshot.teamPublicId,
+      }),
+    ).toBeNull();
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(
+      await t.query(api.teams.getTeamState, {
+        teamPublicId: snapshot.teamPublicId,
+      }),
+    ).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
