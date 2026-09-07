@@ -200,7 +200,7 @@ Pricing remains outside this PRD. The component enables workspace subscriptions 
 
 ## Start the next Codex session
 
-Open `/Users/denis/git/clipin/convex-teams` and use this prompt:
+Open the repository root and use this prompt:
 
 > Read `docs/prd-component-completion.md`. Recheck the current source and begin Phase 1, then work through the component backlog. Treat Feedtwin as an unmigrated source application. Integrate the existing convex-invite package instead of maintaining a second invitation lifecycle. Keep pricing and product-specific billing outside the component. Preserve local work. Record resolved decisions, verification results, and remaining tasks in this document. Prepare consumer migration in development before any production change. Do not publish a package as part of this session unless I request it.
 

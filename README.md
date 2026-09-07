@@ -2,7 +2,9 @@
 
 A Convex component for workspace identity, membership, ownership, and preferences. Public API names use `team` for a workspace.
 
-This is a development implementation. It is not ready for a stable release. The package still has its original metadata. The proposed `@clipin/convex-teams` identity, repository ownership, and source licence attribution need verification before publication.
+This is a development implementation for `convex-teams`, maintained in [clipinfit/convex-teams](https://github.com/clipinfit/convex-teams). The component targets `0.1.0-alpha.0`. It is not ready for production. The separate `0.0.0-development.0` name-claim artifact contains only a development notice and licence. It does not provide a runtime API.
+
+See [the changelog](CHANGELOG.md) and [release procedure](RELEASING.md) for versioning and release requirements.
 
 ## Run the development example
 

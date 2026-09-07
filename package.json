@@ -1,11 +1,11 @@
 {
-  "name": "@convex-dev/teams",
-  "version": "0.0.1",
-  "description": "Convex component for team management with RBAC \u2014 create teams, manage members, send invites, and track active/default team preferences out of the box.",
+  "name": "convex-teams",
+  "version": "0.1.0-alpha.0",
+  "description": "Convex workspaces with membership, ownership, preferences, and convex-invite integration.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/get-convex/convex-teams#readme",
+  "homepage": "https://github.com/clipinfit/convex-teams#readme",
   "bugs": {
-    "url": "https://github.com/get-convex/convex-teams/issues"
+    "url": "https://github.com/clipinfit/convex-teams/issues"
   },
   "type": "module",
   "main": "./dist/client/index.js",
@@ -14,7 +14,9 @@
     "dist",
     "src",
     "!src/**/*.test.ts",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "exports": {
     "./package.json": "./package.json",
@@ -54,7 +56,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc -p example/convex/tsconfig.json --noEmit",
     "codegen": "cd example && convex codegen --component-dir ../src/component",
-    "pack:check": "npm pack --dry-run"
+    "pack:check": "node scripts/check-package.mjs",
+    "prepublishOnly": "node scripts/check-release.mjs",
+    "version:alpha": "npm version prerelease --preid=alpha --no-git-tag-version && bun install --lockfile-only"
   },
   "peerDependencies": {
     "convex": ">=1.43.0"
@@ -72,7 +76,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/get-convex/convex-teams"
+    "url": "git+https://github.com/clipinfit/convex-teams.git"
   },
   "keywords": [
     "convex",
@@ -91,5 +95,10 @@
   },
   "patchedDependencies": {
     "convex-invite@0.1.0": "patches/convex-invite@0.1.0.patch"
-  }
+  },
+  "author": "Denis Ciccale",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "bun@1.4.0"
 }
