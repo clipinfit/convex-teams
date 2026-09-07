@@ -39,6 +39,6 @@ The Vercel project must retain `apps/web` as its root directory. Keep access to 
 
 ## Check the deployment
 
-Verify the production URL from the Vercel deployment result. Open the landing page and `/docs`. Search for `seat`, then open a result. Confirm that the release-status page still identifies the npm artifact as a notice-only package until a runtime is published.
+Verify the production URL from the Vercel deployment result. Open the landing page and `/docs`. Search for `seat`, then open a result. Confirm that installation commands use `@clipin/convex-teams` and the release-status page matches the verified npm version.
 
 Use `vercel inspect <deployment-url> --logs --scope clipin` to diagnose a build failure.

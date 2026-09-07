@@ -34,7 +34,7 @@ export default function Home() {
           <div className="hero-copy">
             <Link href="/docs/release-status" className="release-pill">
               <span />
-              Preparing the organization release <ArrowRight size={13} />
+              Version 1.0.0 is available <ArrowRight size={13} />
             </Link>
             <p className="eyebrow">OPEN SOURCE / CONVEX COMPONENT</p>
             <h1>
@@ -56,7 +56,7 @@ export default function Home() {
               </a>
             </div>
             <p className="availability">
-              The first stable package will be @clipin/convex-teams.
+              Install with npm install @clipin/convex-teams.
             </p>
           </div>
           <div
@@ -183,7 +183,7 @@ export default function Home() {
         <section className="release-section">
           <div>
             <p className="eyebrow">DEVELOPED IN THE OPEN</p>
-            <h2>Follow the first release.</h2>
+            <h2>Use the first stable release.</h2>
             <p>
               The published candidate passed clean installation and consumer
               checks. Read the release evidence and the host integration
