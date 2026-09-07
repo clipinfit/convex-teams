@@ -1,0 +1,57 @@
+---
+title: Client reference
+description: TeamsClient methods in the current development API.
+---
+
+Import `TeamsClient` from `convex-teams` and pass the generated `components.teams` reference. These methods run inside host Convex functions.
+
+The API targets an unpublished alpha. Signatures can change before release. See the [typed client source](https://github.com/clipinfit/convex-teams/blob/main/packages/convex-teams/src/client/index.ts) for exact argument types.
+
+## Queries
+
+| Method | Arguments after `ctx` | Purpose |
+| --- | --- | --- |
+| `listTeams` | `userId, paginationOpts` | Page through accessible teams. |
+| `getTeamBySlug` | `userId, teamSlug` | Read an accessible team. |
+| `getActiveTeam` | `userId` | Resolve the active preference. |
+| `getDefaultTeam` | `userId` | Resolve the default preference. |
+| `listMembers` | `userId, teamSlug, paginationOpts` | Page through team members. |
+| `listPendingInvites` | `userId, teamSlug, paginationOpts` | Page through pending invitations. Requires owner or admin. |
+
+## Workspace mutations
+
+| Method | Purpose |
+| --- | --- |
+| `createTeam(ctx, userId, teamName)` | Create a workspace with the actor as owner. |
+| `ensurePersonalTeam(ctx, args)` | Find or create the actor's personal workspace. |
+| `setActiveTeam(ctx, userId, teamSlug)` | Select an accessible workspace. |
+| `setDefaultTeam(ctx, userId, teamId)` | Set the default preference. |
+| `updateTeamProfile(ctx, args)` | Update the workspace profile. |
+| `updateMemberRole(ctx, args)` | Explicitly change a non-owner role. |
+| `transferOwnership(ctx, args)` | Atomically transfer ownership to an existing member. |
+| `addMember(ctx, args)` | Grant membership through trusted provisioning. |
+| `removeMember(ctx, args)` | Remove a non-owner member. |
+| `leaveTeam(ctx, userId, teamSlug)` | Leave as a non-owner member. |
+| `deleteTeam(ctx, userId, teamPublicId)` | Deny access and schedule bounded cleanup. |
+
+## Invitation methods
+
+| Method | Purpose |
+| --- | --- |
+| `createInvite(ctx, args)` | Issue an invitation scoped to the team. |
+| `resendInvite(ctx, userId, inviteId)` | Rotate a token and return the current invitation ID. |
+| `revokeInvite(ctx, userId, inviteId)` | Revoke an invitation. |
+| `acceptInvite(ctx, args)` | Accept and grant membership in one transaction. |
+| `recordDeliveryAttempt(ctx, args)` | Record safe delivery metadata. |
+| `pruneInvitations(ctx, limit?)` | Run bounded retention maintenance. |
+
+## Package exports
+
+| Export | Purpose |
+| --- | --- |
+| `convex-teams` | Client and public types. |
+| `convex-teams/convex.config.js` | Component configuration to mount in the host. |
+| `convex-teams/types` | Public result types. |
+| `convex-teams/test` | Register teams and its invite child with convex-test. |
+
+The npm name-claim package does not contain these exports yet. Evaluate them from the [source workspace](/docs/getting-started).

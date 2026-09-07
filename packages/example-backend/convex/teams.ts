@@ -1,6 +1,6 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { TeamsClient } from "../../src/client/index.js";
+import { TeamsClient } from "convex-teams";
 import { components } from "./_generated/api.js";
 import { mutation, query } from "./_generated/server.js";
 

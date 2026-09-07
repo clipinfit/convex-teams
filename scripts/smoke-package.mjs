@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-const root = resolve(import.meta.dirname, "..");
+const root = resolve(import.meta.dirname, "../packages/convex-teams");
 const directory = mkdtempSync(join(tmpdir(), "convex-teams-packed-"));
 const candidate = process.argv[2] ? resolve(process.argv[2]) : null;
 const environment = { ...process.env, CONVEX_AGENT_MODE: "anonymous" };

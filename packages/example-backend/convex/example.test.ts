@@ -1,6 +1,6 @@
+import { register } from "convex-teams/test";
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
-import { register } from "../../src/test.js";
 import { api, components, internal } from "./_generated/api.js";
 import schema from "./schema.js";
 

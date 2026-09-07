@@ -1,0 +1,53 @@
+---
+title: Workspaces and roles
+description: Ownership, membership, personal teams, preferences, and deletion.
+---
+
+## One owner per workspace
+
+Each team has one owner. An owner can transfer ownership to an existing member. The transfer changes the owner record and both membership roles in one transaction. The former owner becomes an admin.
+
+| Operation | Owner | Admin | Member |
+| --- | --- | --- | --- |
+| Read team and members | Yes | Yes | Yes |
+| Change team profile | Yes | Yes | No |
+| Invite and manage non-owner members | Yes | Yes | No |
+| Read invitation recipients | Yes | Yes | No |
+| Transfer ownership | Yes | No | No |
+| Delete team | Yes | No | No |
+| Leave team | Transfer first | Yes | Yes |
+
+Invitations and direct grants preserve existing roles. Use `updateMemberRole` for an explicit change. Generic role changes cannot change the owner.
+
+## Personal teams
+
+`ensurePersonalTeam` creates a personal workspace explicitly. A separate personal-owner field identifies it. A default-team preference does not define personal ownership.
+
+Personal ownership cannot be transferred. Invitation acceptance does not create a personal workspace.
+
+## Preferences and access
+
+Active and default preferences select a workspace. They do not authorize access to host content. Check current membership before each protected operation.
+
+After removal or deletion, preference repair checks saved preferences and scans memberships in batches of 25. A continuation rechecks current preferences, so a later explicit selection wins. The result can be temporarily null during repair.
+
+## Paginated lists
+
+`listTeams`, `listMembers`, and `listPendingInvites` accept pagination options. Request 1 to 100 rows:
+
+```ts
+const result = await teams.listTeams(ctx, userId, {
+  numItems: 25,
+  cursor: null,
+});
+```
+
+Read `result.page`. For the next request, pass `result.continueCursor` as the cursor. Continue until `result.isDone` is true, including after an empty page. Deletion cleanup can leave an empty intermediate team page.
+
+Team pages use membership order. Sort the returned results in the host UI if needed.
+
+## Deletion
+
+`deleteTeam` requires the owner. It immediately denies access and invalidates invitation grants. Cleanup removes memberships and repairs preferences in batches of 50. The final batch removes the team record. Cleanup supports retries.
+
+The host owns content and billing cleanup. Store a durable host cleanup job in the same mutation that requests deletion. Use the immutable `teamPublicId` as its reference.

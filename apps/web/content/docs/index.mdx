@@ -1,0 +1,32 @@
+---
+title: Workspaces for Convex
+description: Team identity, membership, ownership, and invitations in a reusable Convex component.
+---
+
+`convex-teams` gives each workspace its own members, roles, and preferences. Public API names use `team` for a workspace.
+
+## Development status
+
+The source targets `0.1.0-alpha.0`. It is not ready for production. The npm name is claimed as `0.0.0-development.0`, which contains a notice and licence only. It has no runtime API.
+
+Use the [local development example](/docs/getting-started) to evaluate the component. See [release status](/docs/release-status) for the remaining checks.
+
+## Component boundaries
+
+| Part | Responsibility |
+| --- | --- |
+| convex-teams | Workspace identity, membership, roles, ownership, preferences, and membership grants |
+| convex-invite | Invitation tokens, expiry, resend, revocation, acceptance, and delivery metadata |
+| Your app | Authentication, verified email, seat policy, delivery, billing, and content permissions |
+
+Mount teams once. It mounts convex-invite as a child component. You do not need a separate invitation lifecycle.
+
+## Find a guide
+
+- [Run the local example](/docs/getting-started).
+- [Understand workspaces and roles](/docs/workspaces).
+- [Integrate invitations](/docs/invitations).
+- [Check the host contract](/docs/host-contract).
+- [Find a client method](/docs/api).
+
+The project uses the Apache-2.0 licence. Source and issues are on [GitHub](https://github.com/clipinfit/convex-teams).

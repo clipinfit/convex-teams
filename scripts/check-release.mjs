@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const manifest = JSON.parse(readFileSync("package.json", "utf8"));
 assert.equal(manifest.name, "convex-teams");
 assert.equal(
-  Object.keys(manifest.patchedDependencies ?? {}).length,
+  Object.keys(
+    JSON.parse(
+      readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8"),
+    ).patchedDependencies ?? {},
+  ).length,
   0,
   "Release blocked: replace the development dependency patch with a corrected published dependency.",
 );

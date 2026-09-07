@@ -308,3 +308,19 @@ Next release gates:
 3. Decide the legacy data migration policy from deployment evidence.
 4. Add stable-identifier imports, rehearse the Feedtwin migration fixture, and validate a real development consumer.
 5. Complete attribution and supported-version checks. Run the registry-only packed consumer check before a component release.
+
+
+## Monorepo and documentation checkpoint: 2026-09-07
+
+The user requested a monorepo based on convex-chat and a website deployed to Vercel. The full reference repository is `/Users/denis/git/convex-chat`; the adjacent partial folder is not its working checkout.
+
+- `packages/convex-teams` contains the publishable component, source, tests, and package metadata.
+- `packages/example-backend` contains the authenticated host example and backend proofs. It imports the workspace package through public exports.
+- `apps/web` contains a Next.js 16 and Fumadocs website with seven searchable documentation pages.
+- The root is private. Bun workspaces and Turborepo manage builds, type checks, and tests. The component version stays at the unpublished `0.1.0-alpha.0`.
+- The invite patch stays at the root. The component publication guard explicitly checks the root manifest after the move.
+- Website copy states that the npm artifact contains only a name-claim notice. Website publication does not publish the component runtime.
+
+The 22 component and host tests pass. Type checks, lint, package-content checks, and website production build pass. The clean packed consumer check still passes with the corrected local invite archive. The browser check covers desktop and mobile layouts, documentation navigation, code selection, and search results.
+
+The Vercel project is `convex-teams` under the `clipin` team, with `apps/web` as its root directory. Deployment credentials and local Convex files stay ignored.

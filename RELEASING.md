@@ -26,9 +26,9 @@ Complete npm browser sign-in or 2FA locally when requested. Never commit npm cre
 
 1. Replace the invite patch with a corrected published dependency. A downstream install cannot rely on this repository's Bun patch.
 2. Complete the required PRD tests, the consumer rehearsal, and a clean packed installation.
-3. Update `CHANGELOG.md`. For a subsequent alpha, run `bun run version:alpha`. Review both `package.json` and `bun.lock`.
+3. Update `CHANGELOG.md`. For a subsequent alpha, run `bun run version:alpha`. Review `packages/convex-teams/package.json` and the root `bun.lock`.
 4. Run the checks below. Commit and push the release candidate.
-5. Publish with `npm publish --tag alpha --access public`.
+5. From `packages/convex-teams`, publish with `npm publish --tag alpha --access public`.
 6. Verify the registry version and integrity. Tag that exact commit as `v<version>` and push the tag.
 
 ```sh
@@ -55,3 +55,9 @@ bun run pack:smoke /absolute/path/convex-invite-candidate.tgz
 ```
 
 A candidate result validates that archive only. Before publication, replace the patched dependency with its corrected registry version, remove the patch, and rerun `bun run pack:smoke` without an argument. A local candidate does not satisfy this release gate.
+
+## Monorepo package boundaries
+
+The repository root is private. Publish only from `packages/convex-teams`. Keep its `CHANGELOG.md` and `LICENSE` synchronized with the root copies before a release. The package README uses GitHub links so they also work on npm.
+
+The invite development patch belongs to the workspace root. The component publication guard reads that root manifest and rejects publication while the patch is present. Website deployments do not publish an npm package.

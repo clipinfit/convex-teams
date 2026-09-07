@@ -1,0 +1,54 @@
+---
+title: Invitations and seats
+description: Use convex-invite for the invitation lifecycle and grant membership atomically.
+---
+
+Teams mounts convex-invite as its child. Invitations use the immutable `teamPublicId` as their scope. The host supplies the authenticated actor and verified recipient email.
+
+## Issue and deliver
+
+1. Authenticate the sender in a host action.
+2. Call an internal host mutation to create the invitation.
+3. Send the returned token from action memory to your delivery provider.
+4. Record fixed delivery metadata with `recordDeliveryAttempt`.
+
+Never store or log the raw token. Do not include it in scheduled arguments. For scheduled delivery, schedule the recipient and workspace information, then issue the token inside the action.
+
+See the [delivery example](https://github.com/clipinfit/convex-teams/blob/main/packages/example-backend/convex/delivery.ts).
+
+## Accept with the current seat policy
+
+Read the trusted seat limit in the same host mutation as acceptance. Derive `userId` and `email` from verified host identity.
+
+```ts
+await teams.acceptInvite(ctx, {
+  userId,
+  email,
+  token,
+  seatLimit,
+});
+```
+
+The owner consumes a seat. Pending invitations do not reserve seats. Omit `seatLimit` only for an unlimited policy. A limit must be a nonnegative safe integer.
+
+A capacity failure rolls back invitation acceptance and membership creation. You can retry the same invitation after capacity changes. A limit reduction does not remove existing members.
+
+Repeated acceptance preserves the current role. An accepted token cannot restore a removed membership.
+
+## Resend and revoke
+
+`createInvite` returns `INVITATION_ALREADY_PENDING` for a duplicate pending invitation. Use `resendInvite` to rotate the token. Use the returned invitation ID after a resend.
+
+A provider failure leaves the invitation available for explicit resend. If delivery succeeds but metadata recording fails, delivery is uncertain. Reconcile that state before sending again.
+
+Use `revokeInvite` to revoke an invitation. Expired, revoked, and wrong-recipient invitations cannot grant membership.
+
+## Retention
+
+Call `pruneInvitations` from trusted host maintenance. The child expires pending records and removes terminal records after its 90-day retention period. Each call is bounded. Run enough batches for your invitation volume.
+
+## Dependency release blocker
+
+The published `convex-invite@0.1.0` uses native pagination that Convex rejects inside component mounts. This repository applies a Bun patch. A corrected source version is prepared in [invite PR #1](https://github.com/dciccale/convex-invite/pull/1).
+
+A clean npm consumer cannot depend on the repository patch. A corrected invite release remains a prerequisite for the teams runtime release.

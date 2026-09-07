@@ -1,0 +1,86 @@
+---
+title: Run the local example
+description: Evaluate the development component in an anonymous local Convex backend.
+---
+
+Use Node.js 22 or later and Bun 1.4.0. The published npm package has no runtime yet. Work from this repository so Bun can apply the required invite dependency patch.
+
+## 1. Get the source
+
+```sh
+git clone https://github.com/clipinfit/convex-teams.git
+cd convex-teams
+bun install --frozen-lockfile
+bun run build
+```
+
+The component is in `packages/convex-teams`. The host example is in `packages/example-backend`. The website is in `apps/web`.
+
+## 2. Start the example backend
+
+```sh
+bun run dev:example
+```
+
+The example starts an anonymous local Convex deployment. It does not connect to production data.
+
+From another terminal, check the workspace:
+
+```sh
+bun run typecheck
+bun run test
+bun run lint
+bun run pack:check
+```
+
+## 3. Run the concurrency proofs
+
+```sh
+cd packages/example-backend
+bunx convex run proof:run
+bunx convex run proof:concurrentBootstrap
+bunx convex run proof:concurrentDuplicateGrant
+```
+
+The seat proof must return one successful grant, one rejected grant, and two members. The bootstrap proof must create one personal team. The duplicate grant proof must create one membership for the recipient.
+
+## How the example mounts teams
+
+```ts
+import { defineApp } from "convex/server";
+import teams from "convex-teams/convex.config.js";
+
+const app = defineApp();
+app.use(teams);
+export default app;
+```
+
+Create a client in your host functions:
+
+```ts
+import { TeamsClient } from "convex-teams";
+import { components } from "./_generated/api.js";
+
+export const teams = new TeamsClient(components.teams);
+```
+
+Inside a host mutation, derive the actor from authentication:
+
+```ts
+const identity = await ctx.auth.getUserIdentity();
+if (!identity) throw new Error("Not authorized.");
+
+return teams.createTeam(ctx, identity.subject, "Studio workspace");
+```
+
+See the [complete host example](https://github.com/clipinfit/convex-teams/tree/main/packages/example-backend/convex) for recipient verification and delivery. Read the [host contract](/docs/host-contract) before exposing a client method.
+
+## Run the docs website
+
+From the repository root:
+
+```sh
+bun run dev:web
+```
+
+Open `http://localhost:3000`.

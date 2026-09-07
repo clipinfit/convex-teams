@@ -4,7 +4,7 @@ A Convex component for workspace identity, membership, ownership, and preference
 
 This is a development implementation for `convex-teams`, maintained in [clipinfit/convex-teams](https://github.com/clipinfit/convex-teams). The component targets `0.1.0-alpha.0`. It is not ready for production. The published [`0.0.0-development.0` name-claim artifact](https://www.npmjs.com/package/convex-teams/v/0.0.0-development.0) contains only a development notice and licence. It does not provide a runtime API.
 
-See [the changelog](CHANGELOG.md) and [release procedure](RELEASING.md) for versioning and release requirements.
+See [the changelog](CHANGELOG.md) and [release procedure](https://github.com/clipinfit/convex-teams/blob/main/RELEASING.md) for versioning and release requirements.
 
 ## Workspace layout
 
@@ -55,13 +55,13 @@ The proof creates a development fixture. One direct grant and one invitation acc
 | `convex-invite` | Tokens, expiry, resend, revocation, acceptance, and delivery metadata |
 | Host application | Authentication, verified email, current seat policy, message delivery, billing, and content permissions |
 
-Teams mounts `convex-invite` as its child. The host mounts only teams. See [the example configuration](packages/example-backend/convex/convex.config.ts).
+Teams mounts `convex-invite` as its child. The host mounts only teams. See [the example configuration](https://github.com/clipinfit/convex-teams/blob/main/packages/example-backend/convex/convex.config.ts).
 
 `convex-invite@0.1.0` requires the tracked Bun patch in `patches/`. Its published list queries use Convex's built-in pagination, which does not run inside a component. The patch uses `convex-helpers` pagination. The [Convex component documentation](https://docs.convex.dev/components/authoring#pagination) describes this restriction. A corrected invite release is required before an independent teams package can pass a clean consumer installation without this patch.
 
 ## Host integration
 
-Create a `TeamsClient` with your host's generated `components.teams` reference. The client methods accept contexts from host Convex functions. The [host example](packages/example-backend/convex/teams.ts) derives the actor from authentication and checks that the invitation recipient has a verified email.
+Create a `TeamsClient` with your host's generated `components.teams` reference. The client methods accept contexts from host Convex functions. The [host example](https://github.com/clipinfit/convex-teams/blob/main/packages/example-backend/convex/teams.ts) derives the actor from authentication and checks that the invitation recipient has a verified email.
 
 Never expose a submitted actor ID or email as trusted identity. Component functions become internal references in the host. Host wrappers determine which operations clients can call.
 
@@ -95,7 +95,7 @@ A capacity failure rolls back both child invitation acceptance and the new membe
 
 ## Delivery
 
-[The delivery example](packages/example-backend/convex/delivery.ts) authenticates the actor in a host action. It calls an internal host mutation to issue the invitation, then sends the token from action memory to the provider.
+[The delivery example](https://github.com/clipinfit/convex-teams/blob/main/packages/example-backend/convex/delivery.ts) authenticates the actor in a host action. It calls an internal host mutation to issue the invitation, then sends the token from action memory to the provider.
 
 Never store or log the raw token. Never include it in scheduled arguments. To schedule delivery, schedule only the recipient and team information, then issue the token inside the action. Record only safe delivery metadata. The example catches provider errors and returns a fixed state without provider error text.
 
@@ -121,4 +121,4 @@ The old `teamInvites` table and `pending_payment` schema value remain only for m
 
 Convex handles transaction conflicts. Do not catch a membership-grant error and return success from a host acceptance mutation.
 
-See [the completion PRD](docs/prd-component-completion.md) for remaining work and [the Feedtwin migration map](docs/feedtwin-migration-map.md) for consumer constraints.
+See [the completion PRD](https://github.com/clipinfit/convex-teams/blob/main/docs/prd-component-completion.md) for remaining work and [the Feedtwin migration map](https://github.com/clipinfit/convex-teams/blob/main/docs/feedtwin-migration-map.md) for consumer constraints.

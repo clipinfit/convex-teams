@@ -5,3 +5,10 @@ dist/
 .env.local
 
 .convex/
+
+.next/
+.source/
+.turbo/
+.vercel/
+out/
+.vercel

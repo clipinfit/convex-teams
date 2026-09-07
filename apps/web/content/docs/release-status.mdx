@@ -1,0 +1,38 @@
+---
+title: Release status
+description: What is available today and what remains before the first component release.
+---
+
+## Available today
+
+- The public source repository contains the development implementation.
+- The npm name `convex-teams` is claimed as `0.0.0-development.0`.
+- That published artifact contains a notice, package metadata, and licence only.
+- The source runtime targets `0.1.0-alpha.0`. It has not been published.
+
+Both npm's `development` and `latest` tags refer to the notice-only artifact. Do not use it as a working component.
+
+## Verified in development
+
+The component and host suite covers ownership, role preservation, invitation acceptance, recipient checks, delivery failures, bounded lists, deletion, and preference repair.
+
+Actual local Convex transactions also verify the final-seat race, concurrent personal bootstrap, and duplicate membership grants.
+
+A clean packed npm consumer passes with the corrected local invite archive. This does not validate the unchanged registry dependency.
+
+## Remaining release gates
+
+1. Publish a corrected convex-invite version, update the teams dependency, and remove the temporary Bun patch.
+2. Complete the large-capacity seat check and slug allocation workload review.
+3. Decide the legacy data policy from deployment evidence.
+4. Add stable-identifier imports and rehearse a real development consumer migration.
+5. Complete attribution and supported-version checks.
+6. Pass the clean packed consumer check using registry dependencies only.
+
+Track the [completion PRD](https://github.com/clipinfit/convex-teams/blob/main/docs/prd-component-completion.md) and the [invite pagination fix](https://github.com/dciccale/convex-invite/pull/1).
+
+## Version policy
+
+Unfinished component releases use the `alpha` tag. During `0.x`, incompatible API or schema changes require a minor version. Compatible fixes use a patch version.
+
+Checkpoint commits do not change the package version. Each published artifact has a new immutable version. The release procedure is in [RELEASING.md](https://github.com/clipinfit/convex-teams/blob/main/RELEASING.md).

@@ -4,11 +4,23 @@
     "includes": [
       "**",
       "!!**/_generated",
-      "!!dist",
+      "!!**/dist",
       "!!**/.convex",
-      "!!node_modules"
+      "!!**/node_modules",
+      "!!**/.next",
+      "!!**/.source",
+      "!!**/.turbo",
+      "!!**/.vercel"
     ]
   },
-  "formatter": { "indentStyle": "space", "indentWidth": 2 },
-  "linter": { "enabled": true, "rules": { "recommended": true } }
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  }
 }

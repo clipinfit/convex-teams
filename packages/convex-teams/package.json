@@ -1,0 +1,100 @@
+{
+  "name": "convex-teams",
+  "version": "0.1.0-alpha.0",
+  "description": "Convex workspaces with membership, ownership, preferences, and convex-invite integration.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/clipinfit/convex-teams#readme",
+  "bugs": {
+    "url": "https://github.com/clipinfit/convex-teams/issues"
+  },
+  "type": "module",
+  "main": "./dist/client/index.js",
+  "types": "./dist/client/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./test": "./src/test.ts",
+    "./_generated/component.js": {
+      "types": "./dist/component/_generated/component.d.ts"
+    },
+    "./convex.config": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    },
+    "./convex.config.js": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    },
+    "./types": {
+      "types": "./dist/client/types.d.ts",
+      "default": "./dist/client/types.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prebuild": "node --eval \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "prepack": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "codegen": "cd ../example-backend && convex codegen --component-dir ../convex-teams/src/component",
+    "pack:check": "node ../../scripts/check-package.mjs",
+    "prepublishOnly": "node ../../scripts/check-release.mjs"
+  },
+  "peerDependencies": {
+    "convex": ">=1.43.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.7",
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "convex": "1.43.0",
+    "convex-test": "0.0.55",
+    "tsx": "^4.19.0",
+    "typescript": "7.0.2",
+    "vite": "8.2.1",
+    "vitest": "4.1.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clipinfit/convex-teams.git",
+    "directory": "packages/convex-teams"
+  },
+  "keywords": [
+    "convex",
+    "convex-component",
+    "teams",
+    "rbac",
+    "organizations",
+    "members",
+    "invites",
+    "permissions",
+    "multi-tenant"
+  ],
+  "dependencies": {
+    "convex-helpers": "^0.1.124",
+    "convex-invite": "0.1.0"
+  },
+  "author": "Denis Ciccale",
+  "engines": {
+    "node": ">=20"
+  }
+}

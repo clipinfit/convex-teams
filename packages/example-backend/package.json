@@ -1,0 +1,23 @@
+{
+  "name": "@convex-teams/example-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "CONVEX_AGENT_MODE=anonymous convex dev",
+    "codegen": "convex codegen --component-dir ../convex-teams/src/component --typecheck disable",
+    "typecheck": "tsc -p convex/tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "convex": "1.43.0",
+    "convex-teams": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "vite": "8.2.1",
+    "convex-test": "0.0.55",
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

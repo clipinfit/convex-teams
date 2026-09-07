@@ -1,0 +1,41 @@
+---
+title: Host responsibilities
+description: Authentication, authorization, delivery, billing, and migration remain in your app.
+---
+
+## Trusted identity
+
+Authenticate each public host wrapper. Never trust a user ID or email submitted as a client argument. Check that the invitation recipient email is verified by your authentication provider.
+
+Component functions become internal references in the host. The host controls which operations clients can call. Keep direct `addMember` provisioning behind trusted internal functions.
+
+## Content access
+
+Check current membership before each protected table, file, or media operation. An active-team preference does not grant access.
+
+Team membership alone must not broaden access to personal content. Keep creator identity separate from workspace ownership when your product needs both.
+
+## Billing and capacity
+
+Your app controls subscriptions and seat entitlements. Read the current entitlement in the mutation that grants membership. Pass `seatLimit` on each `acceptInvite` and `addMember` call.
+
+Teams does not set prices, cancel subscriptions, or remove host content. Create durable host cleanup jobs when deleting workspaces.
+
+## Errors and retries
+
+| Error | Response |
+| --- | --- |
+| `Not authorized.` | Authenticate the correct actor or obtain the required membership. |
+| `Team not found.` | Resolve another workspace. The team is missing or deleted. |
+| `Team seat limit reached.` | Change capacity before retrying the invitation. |
+| `Membership no longer exists.` | Obtain a new invitation. An accepted token cannot restore access. |
+| `INVITATION_EXPIRED` or `INVITATION_REVOKED` | Obtain a new invitation. |
+| `INVITATION_AUDIENCE_MISMATCH` | Use the verified intended recipient. |
+
+Convex handles transaction conflicts. Do not catch a membership-grant error and return success from a host acceptance mutation.
+
+## Existing data
+
+The legacy `teamInvites` table and `pending_payment` schema value remain for migration inspection. Current invitation operations do not use the legacy table. Old tokens do not work with the new lifecycle.
+
+Before upgrading an existing deployment, review its data. Define a migration or revoke and reissue old invitations. Stable public identifiers and a real consumer migration rehearsal are still release gates.
