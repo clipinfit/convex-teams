@@ -399,3 +399,15 @@ An optional permission integration can preserve the teams contract. An internal 
 A version increase does not migrate stored component data. For a breaking upgrade, maintainers must provide migration functions where needed, deployment order, upgrade tests against existing records, and a documented recovery procedure. Consumers must adapt their wrappers, run required migrations, and verify access. Installing the npm package alone is insufficient.
 
 Preserve stable public identifiers and the host/component ownership boundary now. These contracts allow future permission integration without requiring a teams redesign.
+
+## Stable-ID import checkpoint: 2026-09-07
+
+Implemented trusted `importTeam`, `importMembers`, and `finishImport` methods. They preserve public IDs, reject identity and role conflicts, and import memberships in batches of at most 100. The owner is created atomically with the team. Completion checks ownership and the expected membership count. Durable receipts survive team deletion. Closed imports reject membership replay, so retries cannot restore removed members.
+
+The host owns migration authorization, source validation, ID mapping, and the membership-write freeze. Teams are active during import, so consumers must not switch to them until verification completes. Imports create new timestamps and do not migrate preferences, invitations, content, or billing. Source records remain necessary for audit and recovery.
+
+The initial synthetic Feedtwin fixture passed in `convex-test` and on the local Convex backend. It imports two teams twice, persists host ID mappings, and preserves billing public IDs, creator ownership, team roles, and project-only read access. Component tests cover a 202-member snapshot, bounded repeat batches, conflicts with atomic rollback, count mismatch, personal classification, and stale replay after removal or deletion.
+
+This is an initial fixture, not a completed consumer migration. Next checks are preference translation, legacy invitation policy, lifecycle behavior on migrated records, recovery after new writes, and Pedalclass private-content fixtures. No consumer source or deployed data changed. The teams runtime remains unpublished.
+
+Checkpoint validation: 34 component and host tests pass. Type checks, lint, 44 documentation links, production build, package-content checks, and the registry-only packed consumer smoke check pass. Convex CLI regenerated the component and host declarations.

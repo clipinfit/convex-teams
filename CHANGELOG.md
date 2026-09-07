@@ -2,6 +2,9 @@
 
 ## Unreleased: 0.1.0-alpha.0
 
+- Add trusted stable-ID imports with bounded membership batches and durable completion receipts.
+- Add a synthetic Feedtwin import proof for ID mapping, billing references, and project-only access.
+
 - Replace per-grant membership scans with atomic membership counts.
 - Add owner-only count preparation for older component records in batches of 100. Block new grants until preparation completes.
 - Bound slug allocation to five attempts with random collision suffixes and a 60-character limit.

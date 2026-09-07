@@ -18,6 +18,16 @@ The API targets an unpublished alpha. Signatures can change before release. See 
 | `listMembers` | `userId, teamSlug, paginationOpts` | Page through team members. |
 | `listPendingInvites` | `userId, teamSlug, paginationOpts` | Page through pending invitations. Requires owner or admin. |
 
+## Trusted migration mutations
+
+These methods are for internal migration jobs. They do not authenticate a caller. Keep them behind trusted host functions and freeze membership writes until cutover. See [Host responsibilities](/docs/host-contract).
+
+| Method | Purpose |
+| --- | --- |
+| `importTeam(ctx, args)` | Preserve a public ID and create the owner. Returns the component team ID and `open` or `complete`. |
+| `importMembers(ctx, args)` | Import 1 to 100 memberships per batch. Reject role conflicts. |
+| `finishImport(ctx, teamPublicId)` | Verify ownership and the expected count, then close the import. |
+
 ## Workspace mutations
 
 | Method | Purpose |

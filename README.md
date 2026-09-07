@@ -49,6 +49,7 @@ bunx convex run proof:concurrentBootstrap
 bunx convex run proof:concurrentDuplicateGrant
 bunx convex run proof:largeSeatLimit
 bunx convex run proof:concurrentSlugs
+bunx convex run migrationProof:run
 ```
 
 The proof creates a development fixture. One direct grant and one invitation acceptance compete for the final seat. The expected result is one successful grant, one rejected grant, and two members.
@@ -136,3 +137,11 @@ The old `teamInvites` table and `pending_payment` schema value remain only for m
 Convex handles transaction conflicts. Do not catch a membership-grant error and return success from a host acceptance mutation.
 
 See [the completion PRD](docs/prd-component-completion.md) for remaining work and [the Feedtwin migration map](docs/feedtwin-migration-map.md) for consumer constraints.
+
+## Trusted imports
+
+`importTeam` preserves an existing public team ID and creates its owner. `importMembers` accepts batches of 1 to 100 memberships. `finishImport` checks ownership and the expected count before closing the import. These methods are for trusted internal migration jobs, not public user endpoints.
+
+Keep membership writes paused and delay consumer cutover until all batches and access comparisons pass. Imported teams are active immediately; the component does not enforce the host migration freeze. Store the old-host-ID to component-ID mapping in the host. Keep project-only memberships, billing references, and content ownership in the host.
+
+Open batches are repeatable with identical roles. Conflicts fail the whole batch. Once complete, skip batch replay. Durable receipts prevent a completed import from restoring removed members or recreating a deleted team. Retain the source snapshot and receipts. Imports do not migrate preferences, invitations, or source timestamps. See the [migration contract](https://convex-teams.vercel.app/docs/host-contract).

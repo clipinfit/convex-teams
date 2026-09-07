@@ -50,6 +50,33 @@ Existing access, removal, leave, and deletion remain available. A removal or lea
 
 ## Existing data
 
+### Import existing teams
+
+Use trusted internal migration functions. These import methods do not authenticate a caller. Before import, freeze membership writes and validate the source snapshot. Confirm exactly one owner and unique memberships. Classify personal workspaces explicitly. Review legacy payment states separately; imported teams start as active.
+
+```ts
+const result = await teams.importTeam(ctx, {
+  teamPublicId: source.teamPublicId,
+  teamName: source.teamName,
+  teamSlug: source.teamSlug,
+  ownerUserId: source.ownerUserId,
+  personal: false,
+  expectedMemberCount: source.memberCount, // Includes the owner.
+});
+```
+
+Store `result.teamId` in a host mapping from the original host ID. Do not use a component ID as a host `Id<"teams">`. If the result is `open`, call `importMembers` with `{ teamPublicId, members }` in batches of 1 to 100. Each member has a `userId` and `owner`, `admin`, or `member` role. The owner is already present and can be included in a batch. Then call `finishImport(ctx, teamPublicId)`.
+
+Repeating an open batch preserves identical memberships. Conflicting roles or owners fail the whole batch. `finishImport` requires the stored count to equal the expected snapshot count. That count is an import bound, not the host's paid seat entitlement. Compare the full imported membership list with the source before cutover.
+
+If `importTeam` returns `complete`, skip the batches. `finishImport` is repeatable. Closed imports reject membership batches. Import receipts survive deletion and prevent replay from recreating the team. Do not remove receipts during cleanup.
+
+Imported teams are active immediately. The host must delay routing consumers to them until verification completes. Keep source membership writes and destination membership writes paused during the import. This API does not enforce a migration lock or reconcile concurrent source changes.
+
+The API preserves names, slugs, public IDs, and membership roles. Public IDs, names, and user IDs must be trimmed, nonempty strings of at most 256 characters. Slugs allow lowercase letters, digits, and single separating hyphens, up to 128 characters for legacy compatibility. New generated slugs remain limited to 60. Expected counts must be positive safe integers.
+
+Imports create new timestamps. They do not import preferences, invitations, product permissions, content, or billing data. Keep source records and original timestamps for audit and recovery. Recovery after new destination writes requires reconciliation; switching configuration alone is insufficient.
+
 The legacy `teamInvites` table and `pending_payment` schema value remain for migration inspection. Current invitation operations do not use the legacy table. Old tokens do not work with the new lifecycle.
 
-Before upgrading an existing deployment, review its data. Define a migration or revoke and reissue old invitations. Stable public identifiers and a real consumer migration rehearsal are still release gates.
+Before upgrading an existing deployment, review its data. Define a migration or revoke and reissue old invitations. A complete consumer migration rehearsal remains a release gate.

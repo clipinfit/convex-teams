@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as imports from "../imports.js";
 import type * as invites from "../invites.js";
 import type * as lib_membership from "../lib/membership.js";
 import type * as lib_pagination from "../lib/pagination.js";
@@ -23,6 +24,7 @@ import type {
 import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
+  imports: typeof imports;
   invites: typeof invites;
   "lib/membership": typeof lib_membership;
   "lib/pagination": typeof lib_pagination;

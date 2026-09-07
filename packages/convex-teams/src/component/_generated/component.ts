@@ -23,6 +23,42 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
+    imports: {
+      begin: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          expectedMemberCount: number;
+          ownerUserId: string;
+          personal: boolean;
+          teamName: string;
+          teamPublicId: string;
+          teamSlug: string;
+        },
+        { status: "open" | "complete"; teamId: string },
+        Name
+      >;
+      finish: FunctionReference<
+        "mutation",
+        "internal",
+        { teamPublicId: string },
+        string,
+        Name
+      >;
+      members: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          members: Array<{
+            role: "owner" | "admin" | "member";
+            userId: string;
+          }>;
+          teamPublicId: string;
+        },
+        null,
+        Name
+      >;
+    };
     invites: {
       acceptInvite: FunctionReference<
         "mutation",

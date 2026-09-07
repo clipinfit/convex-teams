@@ -16,6 +16,23 @@ type ActionCtx = Pick<GenericActionCtx<GenericDataModel>, "runMutation">;
 export class TeamsClient {
   constructor(public readonly component: ComponentApi) {}
 
+  /** Trusted migration only. Never expose as an unauthenticated host endpoint. */
+  importTeam(
+    ctx: MutationCtx,
+    args: FunctionArgs<ComponentApi["imports"]["begin"]>,
+  ) {
+    return ctx.runMutation(this.component.imports.begin, args);
+  }
+  importMembers(
+    ctx: MutationCtx,
+    args: FunctionArgs<ComponentApi["imports"]["members"]>,
+  ) {
+    return ctx.runMutation(this.component.imports.members, args);
+  }
+  finishImport(ctx: MutationCtx, teamPublicId: string) {
+    return ctx.runMutation(this.component.imports.finish, { teamPublicId });
+  }
+
   listTeams(ctx: QueryCtx, userId: string, paginationOpts: PaginationOptions) {
     return ctx.runQuery(this.component.teams.listForUser, {
       userId,

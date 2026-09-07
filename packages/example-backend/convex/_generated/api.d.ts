@@ -9,6 +9,7 @@
  */
 
 import type * as delivery from "../delivery.js";
+import type * as migrationProof from "../migrationProof.js";
 import type * as proof from "../proof.js";
 import type * as teams from "../teams.js";
 
@@ -20,6 +21,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   delivery: typeof delivery;
+  migrationProof: typeof migrationProof;
   proof: typeof proof;
   teams: typeof teams;
 }>;

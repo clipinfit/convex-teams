@@ -2,6 +2,17 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  /** Durable import receipts survive team deletion and prevent snapshot replay. */
+  teamImports: defineTable({
+    teamPublicId: v.string(),
+    teamId: v.id("teams"),
+    teamName: v.string(),
+    teamSlug: v.string(),
+    ownerUserId: v.string(),
+    personal: v.boolean(),
+    expectedMemberCount: v.number(),
+    status: v.union(v.literal("open"), v.literal("complete")),
+  }).index("by_teamPublicId", ["teamPublicId"]),
   /**
    * A team (organization). Teams have a human-readable name, a URL slug,
    * a stable public ID, and an owner. Status tracks payment/deletion state.
