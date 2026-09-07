@@ -60,7 +60,7 @@
     "prepublishOnly": "node ../../scripts/check-release.mjs"
   },
   "peerDependencies": {
-    "convex": ">=1.43.0"
+    "convex": ">=1.43.0 <2.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.7",

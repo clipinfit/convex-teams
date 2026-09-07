@@ -1,0 +1,55 @@
+/// <reference types="vite/client" />
+import { convexTest } from "convex-test";
+import { register } from "convex-teams/test";
+import { expect, test } from "vitest";
+import { components } from "./_generated/api";
+import { assertProjectAccessForTeam } from "./lib/auth";
+import schema from "./schema";
+
+// Four teams, six memberships and three users match the observed production shape.
+// Values are synthetic. Production records and tokens are never copied.
+test("Feedtwin actual schema and authorization retain access under the teams mapping", async () => {
+  const t = convexTest(schema, import.meta.glob("./**/*.ts"));
+  register(t);
+  const now = Date.now();
+  const sourceIds = await t.run(async ctx => {
+    const ids = [];
+    for (let i = 0; i < 4; i++) {
+      const ownerUserId = `user-${i % 3}`;
+      const id = await ctx.db.insert("teams", { teamName: `Team ${i}`, teamSlug: `team-${i}`, teamPublicId: `public-${i}`, ownerUserId, status: "active", createdAt: now, updatedAt: now });
+      await ctx.db.insert("teamMemberships", { teamId: id, userId: ownerUserId, role: "owner", createdAt: now, updatedAt: now });
+      ids.push(id);
+    }
+    await ctx.db.insert("teamMemberships", { teamId: ids[0], userId: "user-1", role: "admin", createdAt: now, updatedAt: now });
+    await ctx.db.insert("teamMemberships", { teamId: ids[0], userId: "user-2", role: "member", createdAt: now, updatedAt: now });
+    return ids;
+  });
+  const mapping = new Map();
+  for (const sourceId of sourceIds) {
+    const source = await t.run(ctx => ctx.db.get(sourceId));
+    const members = await t.run(ctx => ctx.db.query("teamMemberships").withIndex("by_teamId", q => q.eq("teamId", sourceId)).collect());
+    if (!source) throw new Error("Missing source team.");
+    const args = { teamPublicId: source.teamPublicId, teamName: source.teamName, teamSlug: source.teamSlug, ownerUserId: source.ownerUserId, personal: false, expectedMemberCount: members.length };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const imported = await t.mutation(components.teams.imports.begin, args);
+      if (imported.status === "open") {
+        await t.mutation(components.teams.imports.members, { teamPublicId: source.teamPublicId, members: members.map(({userId,role}) => ({userId,role})) });
+        await t.mutation(components.teams.imports.finish, { teamPublicId: source.teamPublicId });
+      }
+      if (mapping.has(sourceId)) expect(imported.teamId).toBe(mapping.get(sourceId));
+      mapping.set(sourceId, imported.teamId);
+    }
+  }
+  const projectId = await t.run(ctx => ctx.db.insert("projects", { teamId: sourceIds[0], name: "Existing project", slug: "existing", createdBy: "user-0", createdAt: now, updatedAt: now }));
+  for (const subject of ["user-0", "user-1", "user-2"]) {
+    const auth = await t.withIdentity({ subject }).run(ctx => assertProjectAccessForTeam(ctx, projectId, "read"));
+    const imported = await t.query(components.teams.teams.getBySlug, { userId: subject, teamSlug: "team-0" });
+    expect(imported.role).toBe(auth.teamRole);
+    expect(imported.teamId).toBe(mapping.get(sourceIds[0]));
+    expect(imported.teamPublicId).toBe("public-0");
+  }
+  await expect(t.withIdentity({ subject: "outsider" }).run(ctx => assertProjectAccessForTeam(ctx, projectId, "read"))).rejects.toThrow("Not authorized");
+  expect(await t.query(components.teams.teams.getBySlug, { userId: "outsider", teamSlug: "team-0" })).toBeNull();
+  expect((await t.run(ctx => ctx.db.get(projectId)))?.createdBy).toBe("user-0");
+  expect(mapping.size).toBe(4);
+});

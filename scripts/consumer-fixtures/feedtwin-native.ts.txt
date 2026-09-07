@@ -1,0 +1,36 @@
+import { v } from "convex/values";
+import { TeamsClient } from "convex-teams";
+import { components } from "./_generated/api";
+import { internalMutation, query } from "./_generated/server";
+import { assertProjectAccessForTeam } from "./lib/auth";
+const teams = new TeamsClient(components.teams);
+export const setup = internalMutation({
+  args: {},
+  returns: v.object({ projectId: v.id("projects"), teamSlug: v.string() }),
+  handler: async ctx => {
+    const teamSlug = `rehearsal-${crypto.randomUUID()}`;
+    const teamPublicId = crypto.randomUUID();
+    const now = Date.now();
+    const sourceId = await ctx.db.insert("teams", { teamName: "Rehearsal", teamSlug, teamPublicId, ownerUserId: "rehearsal-owner", status: "active", createdAt: now, updatedAt: now });
+    await ctx.db.insert("teamMemberships", { teamId: sourceId, userId: "rehearsal-owner", role: "owner", createdAt: now, updatedAt: now });
+    const projectId = await ctx.db.insert("projects", { teamId: sourceId, name: "Rehearsal", slug: teamSlug, createdBy: "rehearsal-owner", createdAt: now, updatedAt: now });
+    const args = { teamPublicId, teamName: "Rehearsal", teamSlug, ownerUserId: "rehearsal-owner", personal: false, expectedMemberCount: 1 };
+    const first = await teams.importTeam(ctx, args);
+    await teams.finishImport(ctx, teamPublicId);
+    const second = await teams.importTeam(ctx, args);
+    if (first.teamId !== second.teamId || second.status !== "complete") throw new Error("Import is not repeatable.");
+    return { projectId, teamSlug };
+  },
+});
+export const compare = query({
+  args: { projectId: v.id("projects"), teamSlug: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated rehearsal.");
+    const source = await assertProjectAccessForTeam(ctx, args.projectId, "read");
+    const imported = await teams.getTeamBySlug(ctx, identity.subject, args.teamSlug);
+    if (!imported || imported.role !== source.teamRole) throw new Error("Authorization changed.");
+    return true;
+  },
+});

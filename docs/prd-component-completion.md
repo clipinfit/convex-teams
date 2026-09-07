@@ -421,3 +421,11 @@ The imported-team lifecycle proof passes in convex-test and on the native local 
 The recovery check shows that the retained source becomes stale after destination membership changes. Source comparison rejects the changed destination. Reverse reconciliation and safe recovery after new writes remain unimplemented. This checkpoint does not resolve legacy invitation policy or complete a real consumer migration.
 
 Next: Pedalclass private-content fixtures, legacy invitation inventory and policy, reverse reconciliation, a real development consumer rehearsal, and final attribution and supported-version checks. Runtime publication remains pending.
+
+## Production inventory and consumer rehearsal: 2026-09-07
+
+The founder clarified that Pedalclass is not in production and Feedtwin has only a few users. Read-only production inspection confirms four active teams, six memberships, three distinct users, and two accepted team invitations. There are no outstanding invitations, project invitations, or project memberships. Ownership and membership uniqueness checks pass. Preserve accepted invitation records as host history; no current tokens need reissue. Repeat the inventory before cutover.
+
+The packed teams artifact passes against actual Pedalclass source in an isolated workspace. All 24 backend tests pass, including a new admin-teammate privacy test for classes, media, and exports. Feedtwin's actual schema and authorization also pass in an isolated copy, followed by a native local backend comparison. Feedtwin needs a Convex upgrade from its installed 1.31.7; the rehearsal uses 1.45.0. No consumer files or production data were changed.
+
+Packed consumer checks pass at Convex 1.43.0 and 1.45.0. The peer range now excludes untested future major versions. See [consumer release evidence](consumer-release-evidence.md) for aggregate counts, invitation policy, reproducible commands, and validation limits. Production cutover remains distinct from release validation.

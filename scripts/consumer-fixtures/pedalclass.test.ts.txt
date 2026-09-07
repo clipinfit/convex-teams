@@ -1,0 +1,44 @@
+/// <reference types="vite/client" />
+import { AUDIO_RIGHTS_POLICY_VERSION, demoWorkoutClasses } from "@pedalclass/workout-core";
+import { convexTest } from "convex-test";
+import { register } from "convex-teams/test";
+import { expect, test } from "vitest";
+import { api, components } from "./_generated/api";
+import schema from "./schema";
+
+// Uses the consumer's actual functions and schema with the packed teams component.
+test("joining a team does not expose private classes, media, or exports", async () => {
+  const t = convexTest(schema, import.meta.glob("./**/*.ts"));
+  register(t);
+  const owner = t.withIdentity({ subject: "private-owner" });
+  const colleague = t.withIdentity({ subject: "colleague" });
+  const source = demoWorkoutClasses[0];
+  if (!source) throw new Error("Missing class fixture.");
+  const { id: _id, ...draft } = source;
+  const classId = await t.run(ctx => ctx.db.insert("classes", { ...draft, audioTracks: [], ownerId: "private-owner" }));
+  const upload = await owner.mutation(api.mediaAssets.createPrivateUploadDraft, {
+    originalFilename: "private.mp3", mimeType: "audio/mpeg", sizeBytes: 1024,
+    durationMs: 1000, rightsAccepted: true, rightsPolicyVersion: AUDIO_RIGHTS_POLICY_VERSION,
+  });
+  if (!upload.storageKey) throw new Error("Missing private media key.");
+  const storageKey = upload.storageKey;
+  await t.run(async ctx => {
+    const media = await ctx.db.query("mediaAssets").withIndex("by_storageKey", q => q.eq("storageKey", storageKey)).unique();
+    if (!media) throw new Error("Missing media fixture.");
+    await ctx.db.patch(media._id, { status: "complete" });
+  });
+  await owner.mutation(api.exportJobs.queueOwnerExport, { classId });
+  const job = await t.run(ctx => ctx.db.query("exportJobs").first());
+  if (!job) throw new Error("Missing export fixture.");
+  const team = await t.mutation(components.teams.teams.createTeam, { userId: "private-owner", teamName: "Private adoption" });
+  await t.mutation(components.teams.teams.addMemberInternal, { teamId: team.teamId, userId: "colleague", role: "admin" });
+  expect((await t.query(components.teams.teams.getBySlug, { userId: "colleague", teamSlug: team.teamSlug }))?.role).toBe("admin");
+  expect(await colleague.query(api.classes.getForEditor, { classId })).toBeNull();
+  expect(await colleague.query(api.classes.listMine, {})).toEqual([]);
+  expect(await colleague.query(api.mediaAssets.authorizeRead, { storageKey: upload.storageKey })).toBe(false);
+  await expect(colleague.query(api.exportJobs.getDownload, { jobId: job._id })).rejects.toThrow();
+  await expect(colleague.mutation(api.exportJobs.cancel, { jobId: job._id })).rejects.toThrow();
+  expect(await owner.query(api.classes.getForEditor, { classId })).not.toBeNull();
+  expect(await owner.query(api.mediaAssets.authorizeRead, { storageKey: upload.storageKey })).toBe(true);
+  expect((await t.run(ctx => ctx.db.get(classId)))?.ownerId).toBe("private-owner");
+});

@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 const root = resolve(import.meta.dirname, "../packages/convex-teams");
 const directory = mkdtempSync(join(tmpdir(), "convex-teams-packed-"));
 const candidate = process.argv[2] ? resolve(process.argv[2]) : null;
+const convexVersion = process.env.CONVEX_SMOKE_VERSION ?? "1.43.0";
 const environment = { ...process.env, CONVEX_AGENT_MODE: "anonymous" };
 for (const key of [
   "CONVEX_DEPLOYMENT",
@@ -44,7 +45,7 @@ try {
         },
         dependencies: {
           "convex-teams": `file:${join(directory, artifact.filename)}`,
-          convex: "1.43.0",
+          convex: convexVersion,
           ...(candidate ? { "convex-invite": `file:${candidate}` } : {}),
         },
       },
@@ -149,6 +150,7 @@ test("packed component registration and grant rollback", async () => {
         directory,
         candidate: candidate ?? "registry",
         inviteVersion: dependency.version,
+        convexVersion,
         ...result,
       },
       null,
