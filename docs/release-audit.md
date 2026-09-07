@@ -63,6 +63,6 @@ The exact registry package passed the native installation, nested registration, 
 
 The production website is deployed with scoped installation commands. The landing page and documentation return HTTP 200. Search for `seat` returns results.
 
-- [ ] Remove both historical unscoped npm versions. The removal command is waiting for npm two-factor authentication. The source name-claim artifact has been removed so it cannot be republished from the current checkout.
+- [x] Remove both historical unscoped npm versions. The registry records removal at 2026-09-07 18:04:25 UTC, lists no available versions, and omits the package from the account package list. The source name-claim artifact is removed.
 
 Both consumer rehearsals also passed with `TEAMS_RELEASE_VERSION=1.0.0`, using the exact scoped registry package. Pedalclass passed 24 tests. Feedtwin passed its source test and native authenticated lifecycle. Original consumer repositories and production data remain unchanged.

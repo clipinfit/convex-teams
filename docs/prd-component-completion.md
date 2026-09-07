@@ -1,7 +1,7 @@
 # Complete convex-teams for application use and CLIPIN OSS
 
 Date: 2026-09-07.
-Status: `@clipin/convex-teams@1.0.0` is published. Component implementation, development consumer rehearsals, and stable publication are complete. Retirement of the unscoped npm artifacts is pending authentication. Production adoption is separate.
+Status: `@clipin/convex-teams@1.0.0` is published. Component implementation, development consumer rehearsals, and stable publication are complete. Both unscoped npm artifacts were removed on 2026-09-07. Production adoption is separate.
 
 ## Purpose
 
@@ -443,3 +443,7 @@ Contribution guidance, attribution notices, and a private security-reporting cha
 The maintainer selected `@clipin/convex-teams` for the first stable release. The npm organization is `clipin`; `denis` is a verified owner. The GitHub repository remains `clipinfit/convex-teams`. Replace unscoped dependency names and imports with the scoped name. The component mount stays `teams`, so this package rename does not change stored team IDs or component paths.
 
 The unscoped 1.0.0 publish was canceled before publication. After scoped publication and registry validation, remove the historical unscoped name claim and candidate if npm permits it. Do not retain an unscoped forwarding package to reserve the name.
+
+## Unscoped package retirement: 2026-09-07
+
+The registry confirms removal of `convex-teams@0.0.0-development.0` and `convex-teams@1.0.0-rc.0` at 18:04:25 UTC. The unscoped package has no available versions and no longer appears in the account package list. Use `@clipin/convex-teams@1.0.0`. The source name-claim package was removed.

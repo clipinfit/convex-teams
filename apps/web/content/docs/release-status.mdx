@@ -7,7 +7,7 @@ description: Stable package availability, validation, and adoption boundaries.
 
 The npm package is `@clipin/convex-teams`. Its first stable version, `1.0.0`, is published under `latest`. The GitHub repository remains `clipinfit/convex-teams`.
 
-The earlier unscoped name claim and release candidate are being retired. They are historical artifacts and are not the installation target.
+The earlier unscoped name claim and release candidate were removed from npm. Install `@clipin/convex-teams`.
 
 ## Verified in development
 
@@ -21,7 +21,7 @@ Membership grants now use an atomic stored count. Legacy counts initialize in bo
 
 ## Release validation
 
-The published candidate passed clean registry installation checks on Convex 1.43.0 and 1.45.0 and both consumer rehearsals. Those checks used the earlier unscoped candidate. The scoped archive also passed both consumer rehearsals and native installation checks on Convex 1.43.0 and 1.45.0. The exact stable registry package passed the native installation check, and its integrity matches the tested archive. Removal of the unscoped artifacts is pending npm authentication.
+The published candidate passed clean registry installation checks on Convex 1.43.0 and 1.45.0 and both consumer rehearsals. Those checks used the earlier unscoped candidate. The scoped archive also passed both consumer rehearsals and native installation checks on Convex 1.43.0 and 1.45.0. The exact stable registry package passed the native installation check, and its integrity matches the tested archive. Both consumers also passed against the exact stable registry package. The unscoped artifacts are removed.
 
 Production inventory, both consumer rehearsals, recovery, attribution, and supported-version checks are recorded in the [release audit](https://github.com/clipinfit/convex-teams/blob/main/docs/release-audit.md). Feedtwin production cutover is a separate operation.
 
