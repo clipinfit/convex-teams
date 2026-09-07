@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased: 0.1.0-alpha.0
+## 1.0.0-rc.0 - 2026-09-07
 
 - Add trusted current team-state lookup for host resource checks and recovery.
 - Verify recovery after ownership changes, removal, and deletion; include attribution notices.

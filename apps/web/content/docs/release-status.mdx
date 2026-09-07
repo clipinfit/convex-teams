@@ -8,7 +8,7 @@ description: What is available today and what remains before the first component
 - The public source repository contains the development implementation.
 - The npm name `convex-teams` is claimed as `0.0.0-development.0`.
 - That published artifact contains a notice, package metadata, and licence only.
-- The source runtime targets `0.1.0-alpha.0`. It has not been published.
+- The source runtime targets `1.0.0-rc.0`. It has not been published.
 
 Both npm's `development` and `latest` tags refer to the notice-only artifact. Do not use it as a working component.
 
@@ -24,15 +24,16 @@ Membership grants now use an atomic stored count. Legacy counts initialize in bo
 
 ## Remaining release gates
 
-1. Decide the legacy data policy from deployment evidence.
-2. Complete consumer migration rehearsal, including legacy invitations, recovery after new writes, and Pedalclass private-content checks. Stable-ID imports, preference translation, and imported-team lifecycle fixtures pass locally. A real consumer deployment remains untested.
-3. Complete attribution and supported-version checks.
-4. Repeat the registry-only packed consumer check on the final release candidate.
+1. Complete final checks on the exact candidate version.
+2. Publish the candidate under `next` and validate clean registry installations.
+3. Publish `1.0.0` under `latest` after candidate verification.
+
+Production inventory, both consumer rehearsals, recovery, attribution, and supported-version checks are recorded in the [release audit](https://github.com/clipinfit/convex-teams/blob/main/docs/release-audit.md). Feedtwin production cutover is a separate operation.
 
 Track the [completion PRD](https://github.com/clipinfit/convex-teams/blob/main/docs/prd-component-completion.md) and the [invite pagination fix](https://github.com/dciccale/convex-invite/pull/1).
 
 ## Version policy
 
-Unfinished component releases use the `alpha` tag. During `0.x`, incompatible API or schema changes require a minor version. Compatible fixes use a patch version.
+Unfinished component releases use the `alpha` tag. The first stable target is `1.0.0`. After 1.0, incompatible API or documented authorization changes require a major version. Compatible additions use a minor version; compatible fixes use a patch.
 
 Checkpoint commits do not change the package version. Each published artifact has a new immutable version. The release procedure is in [RELEASING.md](https://github.com/clipinfit/convex-teams/blob/main/RELEASING.md).

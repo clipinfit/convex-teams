@@ -16,6 +16,12 @@ const consumer = process.argv[2] ?? "pedalclass";
 if (!["pedalclass", "feedtwin"].includes(consumer))
   throw new Error("Choose pedalclass or feedtwin.");
 const source = resolve(process.argv[3] ?? join(root, `../${consumer}`));
+const registryVersion = process.env.TEAMS_RELEASE_VERSION;
+if (
+  registryVersion &&
+  !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(registryVersion)
+)
+  throw new Error("Expected an exact registry version.");
 const directory = mkdtempSync(join(tmpdir(), `teams-${consumer}-`));
 const env = { ...process.env, CONVEX_AGENT_MODE: "anonymous" };
 for (const key of Object.keys(env))
@@ -60,13 +66,15 @@ try {
     join(directory, "package.json"),
     JSON.stringify(manifest, null, 2),
   );
-  const [archive] = JSON.parse(
-    run(
-      "npm",
-      ["pack", "--json", "--pack-destination", directory],
-      join(root, "packages/convex-teams"),
-    ),
-  );
+  const [archive] = registryVersion
+    ? [{ version: registryVersion, filename: "" }]
+    : JSON.parse(
+        run(
+          "npm",
+          ["pack", "--json", "--pack-destination", directory],
+          join(root, "packages/convex-teams"),
+        ),
+      );
   const backend = join(directory, "packages/backend");
   const backendManifest = JSON.parse(
     readFileSync(join(backend, "package.json"), "utf8"),
@@ -87,7 +95,7 @@ try {
     );
   }
   backendManifest.dependencies["convex-teams"] =
-    `file:${join(directory, archive.filename)}`;
+    registryVersion ?? `file:${join(directory, archive.filename)}`;
   writeFileSync(
     join(backend, "package.json"),
     JSON.stringify(backendManifest, null, 2),

@@ -8,6 +8,12 @@ const root = resolve(import.meta.dirname, "../packages/convex-teams");
 const directory = mkdtempSync(join(tmpdir(), "convex-teams-packed-"));
 const candidate = process.argv[2] ? resolve(process.argv[2]) : null;
 const convexVersion = process.env.CONVEX_SMOKE_VERSION ?? "1.43.0";
+const registryVersion = process.env.TEAMS_RELEASE_VERSION;
+if (
+  registryVersion &&
+  !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(registryVersion)
+)
+  throw new Error("Expected an exact registry version.");
 const environment = { ...process.env, CONVEX_AGENT_MODE: "anonymous" };
 for (const key of [
   "CONVEX_DEPLOYMENT",
@@ -25,9 +31,11 @@ function run(command, args, cwd = directory) {
   });
 }
 try {
-  const [artifact] = JSON.parse(
-    run("npm", ["pack", "--json", "--pack-destination", directory], root),
-  );
+  const [artifact] = registryVersion
+    ? [{ filename: "", version: registryVersion }]
+    : JSON.parse(
+        run("npm", ["pack", "--json", "--pack-destination", directory], root),
+      );
   writeFileSync(
     join(directory, "package.json"),
     JSON.stringify(
@@ -44,7 +52,8 @@ try {
           "@edge-runtime/vm": "5.0.0",
         },
         dependencies: {
-          "convex-teams": `file:${join(directory, artifact.filename)}`,
+          "convex-teams":
+            registryVersion ?? `file:${join(directory, artifact.filename)}`,
           convex: convexVersion,
           ...(candidate ? { "convex-invite": `file:${candidate}` } : {}),
         },
@@ -151,6 +160,9 @@ test("packed component registration and grant rollback", async () => {
         candidate: candidate ?? "registry",
         inviteVersion: dependency.version,
         convexVersion,
+        teamsSource: registryVersion
+          ? `registry:${registryVersion}`
+          : "local archive",
         ...result,
       },
       null,

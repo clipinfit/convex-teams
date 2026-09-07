@@ -1,6 +1,6 @@
 # Release convex-teams
 
-The source package starts at `0.1.0-alpha.0`. Keep unfinished component APIs on the `alpha` distribution tag. Move `latest` to a component release only after the full component and consumer validation plan passes.
+The first stable target is `1.0.0`, preceded by `1.0.0-rc.0` under the `next` tag. Keep unfinished APIs on a prerelease tag. Move `latest` only after the component and consumer validation plan passes. After 1.0, incompatible API or documented authorization changes require a major version; compatible additions require a minor version and compatible fixes require a patch.
 
 The first name-claim publication received both `development` and `latest` from npm. The registry rejected removal of `latest` with HTTP 400. Both currently identify the notice-only package, not a working component.
 
@@ -62,3 +62,19 @@ A candidate result validates that archive only. Before publication, run `bun run
 The repository root is private. Publish only from `packages/convex-teams`. Keep its `CHANGELOG.md` and `LICENSE` synchronized with the root copies before a release. The package README uses GitHub links so they also work on npm.
 
 The invite development patch was removed after `convex-invite@0.1.1` was published. The component publication guard still rejects workspace dependency patches and uncommitted changes. Website deployments do not publish an npm package.
+
+## First stable promotion
+
+Run the final checks on the release candidate and commit it. Publish `1.0.0-rc.0` with `npm publish --tag next --access public` from the component package. Verify its registry version and integrity, then install that exact registry version in the clean consumer checks.
+
+After those checks pass, set the version to `1.0.0`, update documentation and both changelogs, and repeat the final build and package checks. Publish with `npm publish --tag latest --access public`. Verify integrity and tags before creating the matching Git tag and GitHub release. Publication does not perform a consumer production cutover.
+
+To test a registry release instead of a local archive:
+
+```sh
+TEAMS_RELEASE_VERSION=1.0.0-rc.0 bun run pack:smoke
+TEAMS_RELEASE_VERSION=1.0.0-rc.0 node scripts/rehearse-consumer.mjs pedalclass
+TEAMS_RELEASE_VERSION=1.0.0-rc.0 node scripts/rehearse-consumer.mjs feedtwin
+```
+
+Use the exact version under verification. The scripts reject version ranges.
