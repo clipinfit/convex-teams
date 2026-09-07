@@ -33,7 +33,7 @@ The separate permission engine remains deferred. Product-specific permissions, a
 - [x] Run all checks on the exact candidate version and commit.
 - [x] Publish the candidate under a prerelease tag and verify registry integrity.
 - [x] Install the published candidate in clean consumers and rerun the critical checks.
-- [ ] Publish the first stable version and verify tags, integrity, documentation, and repository release.
+- [x] Publish the first stable version and verify tags, integrity, documentation, and repository release.
 
 ## Published candidate
 
@@ -48,3 +48,21 @@ Clean registry installations passed on Convex 1.43.0 and 1.45.0. Pedalclass pass
 ## Organization rename
 
 The first stable package is now `@clipin/convex-teams`. Earlier registry evidence above applies to the unscoped candidate only. Repeat clean scoped installation checks before publication and verify the scoped registry artifact after publication. The historical unscoped package must be removed after the replacement is verified.
+
+## First stable release
+
+`@clipin/convex-teams@1.0.0` is public under `latest`, published from commit `113267c9ba29d98ffa5420a0bf6b8c40eb6223b2`. The matching `v1.0.0` tag and [GitHub release](https://github.com/clipinfit/convex-teams/releases/tag/v1.0.0) are live. [Source CI passed](https://github.com/clipinfit/convex-teams/actions/runs/34149039590).
+
+The downloaded registry archive matches the local artifact:
+
+```text
+sha512-HcesqbNr55olQfdYe+/kiIDMMmJ5ETw2jrPhRbWoCIwnE71b7sLcj/Oq3BNZ6O3B9W0O17pBMNPx1WCalZq9ww==
+```
+
+The exact registry package passed the native installation, nested registration, pagination, and acceptance rollback check on Convex 1.43.0. The scoped archive also passed Convex 1.45.0 and both source consumer rehearsals. npm metadata initially returned 404 while the archive and organization entry were available; the later normal npm installation succeeded.
+
+The production website is deployed with scoped installation commands. The landing page and documentation return HTTP 200. Search for `seat` returns results.
+
+- [ ] Remove both historical unscoped npm versions. The removal command is waiting for npm two-factor authentication. The source name-claim artifact has been removed so it cannot be republished from the current checkout.
+
+Both consumer rehearsals also passed with `TEAMS_RELEASE_VERSION=1.0.0`, using the exact scoped registry package. Pedalclass passed 24 tests. Feedtwin passed its source test and native authenticated lifecycle. Original consumer repositories and production data remain unchanged.

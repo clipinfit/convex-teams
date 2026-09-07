@@ -53,4 +53,6 @@ This is a shadow comparison in an actual consumer development copy. It does not 
 
 ## Remaining work
 
-Recovery reconciliation is exercised by `migrationProof:runRecovery`; see [recovery procedure](recovery-procedure.md). The published `1.0.0-rc.0` candidate passed both consumer rehearsals and the clean installation checks on Convex 1.43.0 and 1.45.0. Each command used `TEAMS_RELEASE_VERSION=1.0.0-rc.0`. Stable publication remains. The consumer rehearsals do not switch production traffic to the component.
+Recovery reconciliation is exercised by `migrationProof:runRecovery`; see [recovery procedure](recovery-procedure.md). The published `1.0.0-rc.0` candidate passed both consumer rehearsals and the clean installation checks on Convex 1.43.0 and 1.45.0. Each command used `TEAMS_RELEASE_VERSION=1.0.0-rc.0`. The first stable version is published as `@clipin/convex-teams@1.0.0`. The scoped archive passed both consumer rehearsals; the stable registry package passed the native installation check. The consumer rehearsals do not switch production traffic to the component.
+
+Both consumer rehearsals also passed with `TEAMS_RELEASE_VERSION=1.0.0`, using the exact scoped registry package. Pedalclass passed 24 tests. Feedtwin passed its source test and native authenticated lifecycle. Original consumer repositories and production data remain unchanged.

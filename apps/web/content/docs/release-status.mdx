@@ -19,9 +19,9 @@ The invite pagination fix is published as `convex-invite@0.1.1`. Teams uses that
 
 Membership grants now use an atomic stored count. Legacy counts initialize in bounded batches. Slug allocation has a fixed attempt budget. Runtime tests cover both paths, including the final-seat race and very large seat policies on a local backend.
 
-## Remaining release gates
+## Release validation
 
-The published candidate passed clean registry installation checks on Convex 1.43.0 and 1.45.0 and both consumer rehearsals. Those checks used the earlier unscoped candidate. The scoped archive also passed both consumer rehearsals and native installation checks on Convex 1.43.0 and 1.45.0. Final public registry verification and removal of the unscoped artifacts remain.
+The published candidate passed clean registry installation checks on Convex 1.43.0 and 1.45.0 and both consumer rehearsals. Those checks used the earlier unscoped candidate. The scoped archive also passed both consumer rehearsals and native installation checks on Convex 1.43.0 and 1.45.0. The exact stable registry package passed the native installation check, and its integrity matches the tested archive. Removal of the unscoped artifacts is pending npm authentication.
 
 Production inventory, both consumer rehearsals, recovery, attribution, and supported-version checks are recorded in the [release audit](https://github.com/clipinfit/convex-teams/blob/main/docs/release-audit.md). Feedtwin production cutover is a separate operation.
 
