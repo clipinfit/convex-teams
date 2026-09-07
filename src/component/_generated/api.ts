@@ -10,7 +10,9 @@
 
 import type * as invites from "../invites.js";
 import type * as lib_membership from "../lib/membership.js";
+import type * as lib_pagination from "../lib/pagination.js";
 import type * as lib_slugify from "../lib/slugify.js";
+import type * as lib_teams from "../lib/teams.js";
 import type * as teams from "../teams.js";
 
 import type {
@@ -23,7 +25,9 @@ import { anyApi, componentsGeneric } from "convex/server";
 const fullApi: ApiFromModules<{
   invites: typeof invites;
   "lib/membership": typeof lib_membership;
+  "lib/pagination": typeof lib_pagination;
   "lib/slugify": typeof lib_slugify;
+  "lib/teams": typeof lib_teams;
   teams: typeof teams;
 }> = anyApi as any;
 

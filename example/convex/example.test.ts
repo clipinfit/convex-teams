@@ -36,8 +36,10 @@ test("the host authenticates identity across the teams and invite component tree
     emailVerified: true,
   });
   await authenticated.mutation(api.teams.accept, { token: fixture.token });
-  const teams = await authenticated.query(api.teams.list, {});
-  expect(teams.map((team) => team.teamId)).toEqual([fixture.teamId]);
+  const teams = await authenticated.query(api.teams.list, {
+    paginationOpts: { numItems: 10, cursor: null },
+  });
+  expect(teams.page.map((team) => team.teamId)).toEqual([fixture.teamId]);
 });
 
 test("delivery issues a token inside the action and schedules no token arguments", async () => {

@@ -5,6 +5,8 @@ import { Invitations } from "convex-invite";
 import { components, internal } from "./_generated/api.js";
 import { mutation, type QueryCtx, query } from "./_generated/server.js";
 import { grantMembership } from "./lib/membership.js";
+import { boundedPagination } from "./lib/pagination.js";
+import { getLiveTeamBySlug } from "./lib/teams.js";
 
 const invitations = new Invitations(components.invite);
 const scope = "teams";
@@ -51,11 +53,7 @@ export const createInvite = mutation({
     expiresAt: v.number(),
   }),
   handler: async (ctx, args) => {
-    const team = await ctx.db
-      .query("teams")
-      .withIndex("by_teamSlug", (q) => q.eq("teamSlug", args.teamSlug.trim()))
-      .filter((q) => q.neq(q.field("status"), "deleted"))
-      .first();
+    const team = await getLiveTeamBySlug(ctx, args.teamSlug.trim());
     if (!team) throw new Error("Team not found.");
     await requireManager(ctx, args.userId, team.teamPublicId);
     const email = args.email.trim().toLowerCase();
@@ -223,18 +221,14 @@ export const listPending = query({
     ),
   }),
   handler: async (ctx, args) => {
-    const team = await ctx.db
-      .query("teams")
-      .withIndex("by_teamSlug", (q) => q.eq("teamSlug", args.teamSlug.trim()))
-      .filter((q) => q.neq(q.field("status"), "deleted"))
-      .first();
+    const team = await getLiveTeamBySlug(ctx, args.teamSlug.trim());
     if (!team) throw new Error("Team not found.");
     await requireManager(ctx, args.userId, team.teamPublicId);
     const result = await invitations.listByResource(ctx, {
       scope,
       resourceRef: team.teamPublicId,
       state: "pending",
-      paginationOpts: args.paginationOpts,
+      paginationOpts: boundedPagination(args.paginationOpts),
     });
     return {
       isDone: result.isDone,

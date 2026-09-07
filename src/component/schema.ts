@@ -25,9 +25,11 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_teamSlug", ["teamSlug"])
+    .index("by_teamSlug_status", ["teamSlug", "status"])
     .index("by_teamPublicId", ["teamPublicId"])
     .index("by_ownerUserId", ["ownerUserId"])
-    .index("by_personalOwnerUserId", ["personalOwnerUserId"]),
+    .index("by_personalOwnerUserId", ["personalOwnerUserId"])
+    .index("by_personalOwnerUserId_status", ["personalOwnerUserId", "status"]),
 
   /**
    * A user's membership in a team. Roles:

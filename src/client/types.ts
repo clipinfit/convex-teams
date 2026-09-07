@@ -3,7 +3,7 @@ import type { ComponentApi } from "../component/_generated/component.js";
 
 export type Team = FunctionReturnType<
   ComponentApi["teams"]["listForUser"]
->[number];
+>["page"][number];
 export type TeamRole = Team["role"];
 export type TeamAccess = Team["access"];
 export type TeamStatus = Team["status"];

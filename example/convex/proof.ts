@@ -144,10 +144,14 @@ export const concurrentBootstrap = internalAction({
     ]);
     const teams = await ctx.runQuery(components.teams.teams.listForUser, {
       userId,
+      paginationOpts: { numItems: 100, cursor: null },
     });
-    if (ids[0] !== ids[1] || teams.length !== 1)
+    if (ids[0] !== ids[1] || teams.page.length !== 1)
       throw new Error("Concurrent bootstrap invariant failed.");
-    return { personalTeamCount: teams.length, sameTeamId: ids[0] === ids[1] };
+    return {
+      personalTeamCount: teams.page.length,
+      sameTeamId: ids[0] === ids[1],
+    };
   },
 });
 

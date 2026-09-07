@@ -81,7 +81,7 @@ A capacity failure rolls back both child invitation acceptance and the new membe
 
 `createInvite` now creates a new invitation. A duplicate pending invitation produces `INVITATION_ALREADY_PENDING`. Use `resendInvite` to rotate its token. Use the returned invitation ID after a resend.
 
-`listMembers` and `listPendingInvites` accept `paginationOpts` and return `page`, `isDone`, and `continueCursor`. Member and invitation lists are separate. Use the `convex-helpers` pagination hook for a reactive host UI.
+`listTeams`, `listMembers`, and `listPendingInvites` require `paginationOpts` and return `page`, `isDone`, and `continueCursor`. Request 1 to 100 rows per page. Team pages use membership order and can be empty during deletion cleanup. Continue until `isDone`, even after an empty page. The host can sort the returned teams for display. Member and invitation lists are separate. Use the `convex-helpers` pagination hook for a reactive host UI.
 
 ## Delivery
 
@@ -93,7 +93,7 @@ A provider failure leaves the invitation available for explicit resend. If the p
 
 ## Deletion and retention
 
-`deleteTeam` requires the owner. It immediately marks the team deleted, which denies access and invalidates its invitation grants. Cleanup removes memberships and repairs affected preferences in batches of 50. Each user gets a fallback they can access, or no workspace. The final cleanup removes the team record. Cleanup retries are safe.
+`deleteTeam` requires the owner. It immediately marks the team deleted, which denies access and invalidates its invitation grants. Cleanup removes memberships and repairs affected preferences in batches of 50. Each user gets a fallback they can access, or no workspace. Fallback repair checks saved preferences directly, then scans 25 memberships per transaction. It schedules another page if necessary. A null redirect can therefore be temporary while cleanup continues. A later explicit selection takes precedence over the background repair. The final cleanup removes the team record. Cleanup retries are safe.
 
 The host must keep any content and subscription cleanup job in its own tables. Create that job in the same host mutation that requests deletion. Use the immutable `teamPublicId` as its reference. Teams does not cancel subscriptions or delete host content.
 

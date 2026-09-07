@@ -1,3 +1,4 @@
+import type { FunctionReturnType } from "convex/server";
 import { register as registerInvite } from "convex-invite/test";
 import { convexTest } from "convex-test";
 import { expect, test, vi } from "vitest";
@@ -477,4 +478,172 @@ test("invitation expiry prevents grants and deletion invalidates pending invitat
       token: pending.token,
     }),
   ).rejects.toThrow("Team not found");
+});
+
+test("team listing pages through memberships and rejects oversized requests", async () => {
+  const t = setup();
+  await t.run(async (ctx) => {
+    for (let i = 0; i < 135; i++) {
+      const id = await ctx.db.insert("teams", {
+        teamName: `Team ${i}`,
+        teamSlug: `team-${i}`,
+        teamPublicId: `public-${i}`,
+        ownerUserId: "owner",
+        status: i < 30 ? "deleted" : "active",
+        createdAt: i,
+        updatedAt: i,
+      });
+      await ctx.db.insert("teamMemberships", {
+        teamId: id,
+        userId: "owner",
+        role: "owner",
+        createdAt: i,
+        updatedAt: i,
+      });
+    }
+  });
+  let cursor: string | null = null;
+  const visible: string[] = [];
+  let pages = 0;
+  while (true) {
+    const result: FunctionReturnType<typeof api.teams.listForUser> =
+      await t.query(api.teams.listForUser, {
+        userId: "owner",
+        paginationOpts: { numItems: 30, cursor },
+      });
+    pages++;
+    expect(result.page.length).toBeLessThanOrEqual(30);
+    visible.push(...result.page.map((team) => team.teamPublicId));
+    if (result.isDone) break;
+    cursor = result.continueCursor;
+  }
+  expect(pages).toBeGreaterThan(1);
+  expect(visible).toHaveLength(105);
+  expect(new Set(visible).size).toBe(105);
+  await expect(
+    t.query(api.teams.listForUser, {
+      userId: "owner",
+      paginationOpts: { numItems: 101, cursor: null },
+    }),
+  ).rejects.toThrow("Page size");
+  const outsider = await t.query(api.teams.listForUser, {
+    userId: "outsider",
+    paginationOpts: { numItems: 100, cursor: null },
+  });
+  expect(outsider.page).toEqual([]);
+});
+
+async function fallbackFixture(t: ReturnType<typeof setup>) {
+  return t.run(async (ctx) => {
+    for (let i = 0; i < 60; i++) {
+      const id = await ctx.db.insert("teams", {
+        teamName: `Deleted ${i}`,
+        teamSlug: `deleted-${i}`,
+        teamPublicId: `deleted-${i}`,
+        ownerUserId: "owner",
+        status: "deleted",
+        createdAt: i,
+        updatedAt: i,
+      });
+      await ctx.db.insert("teamMemberships", {
+        teamId: id,
+        userId: "user",
+        role: "member",
+        createdAt: i,
+        updatedAt: i,
+      });
+    }
+    const home = await ctx.db.insert("teams", {
+      teamName: "Home",
+      teamSlug: "home",
+      teamPublicId: "home",
+      ownerUserId: "user",
+      status: "active",
+      personalOwnerUserId: "user",
+      createdAt: 61,
+      updatedAt: 61,
+    });
+    await ctx.db.insert("teamMemberships", {
+      teamId: home,
+      userId: "user",
+      role: "owner",
+      createdAt: 61,
+      updatedAt: 61,
+    });
+    await ctx.db.insert("userTeamPreferences", {
+      userId: "user",
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    return home;
+  });
+}
+
+test("fallback repair continues beyond its first page", async () => {
+  vi.useFakeTimers();
+  try {
+    const t = setup();
+    const home = await fallbackFixture(t);
+    await t.mutation(internal.teams.repairPreferencesInternal, {
+      userId: "user",
+      cursor: null,
+    });
+    expect(
+      await t.query(api.teams.getActiveTeam, { userId: "user" }),
+    ).toBeNull();
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(
+      (await t.query(api.teams.getActiveTeam, { userId: "user" }))?.teamId,
+    ).toBe(home);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("a later explicit selection wins over scheduled fallback repair", async () => {
+  vi.useFakeTimers();
+  try {
+    const t = setup();
+    await fallbackFixture(t);
+    await t.mutation(internal.teams.repairPreferencesInternal, {
+      userId: "user",
+      cursor: null,
+    });
+    const chosen = await t.mutation(api.teams.createTeam, {
+      userId: "user",
+      teamName: "Chosen",
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(
+      (await t.query(api.teams.getActiveTeam, { userId: "user" }))?.teamId,
+    ).toBe(chosen.teamId);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("bootstrap never uses a stale preference as an access grant", async () => {
+  const t = setup();
+  const home = await fallbackFixture(t);
+  const outsider = await t.mutation(api.teams.createTeam, {
+    userId: "outsider",
+    teamName: "Private",
+  });
+  const outsiderId = await teamId(t, outsider.teamId);
+  await t.run(async (ctx) => {
+    const pref = await ctx.db
+      .query("userTeamPreferences")
+      .withIndex("by_userId", (q) => q.eq("userId", "user"))
+      .unique();
+    if (!pref) throw new Error("Missing fixture preference.");
+    await ctx.db.patch(pref._id, {
+      activeTeamId: outsiderId,
+      defaultTeamId: outsiderId,
+    });
+  });
+  const result = await t.mutation(api.teams.ensurePersonalTeam, {
+    userId: "user",
+  });
+  expect(result.activeTeamId).toBe(home);
+  expect(result.defaultTeamId).toBe(home);
 });

@@ -2,6 +2,10 @@
 
 ## Unreleased: 0.1.0-alpha.0
 
+- Require pagination for team listing and bound all list requests to 100 rows.
+- Continue fallback repair in 25-membership batches without overriding later selections.
+- Reject stale preferences during personal bootstrap.
+
 - Integrate convex-invite as a child component.
 - Preserve roles during membership grants and add atomic ownership transfer.
 - Enforce trusted seat limits on acceptance and direct grants.

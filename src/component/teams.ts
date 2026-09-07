@@ -19,7 +19,9 @@ import {
   query,
 } from "./_generated/server.js";
 import { grantMembership } from "./lib/membership.js";
+import { boundedPagination, FALLBACK_PAGE_SIZE } from "./lib/pagination.js";
 import { slugify } from "./lib/slugify.js";
+import { getLiveTeamBySlug } from "./lib/teams.js";
 import schema from "./schema.js";
 
 // ---------------------------------------------------------------------------
@@ -114,23 +116,6 @@ function getEmailLocalPart(email: string | null | undefined): string | null {
   return local.trim() || null;
 }
 
-async function getLiveTeamBySlug(
-  ctx: DbCtx,
-  teamSlug: string,
-): Promise<Doc<"teams"> | null> {
-  const matches = await ctx.db
-    .query("teams")
-    .withIndex("by_teamSlug", (q) => q.eq("teamSlug", teamSlug))
-    .collect();
-
-  let best: Doc<"teams"> | null = null;
-  for (const team of matches) {
-    if (team.status === "deleted") continue;
-    if (!best || team._creationTime > best._creationTime) best = team;
-  }
-  return best;
-}
-
 async function resolveUniqueSlug(ctx: DbCtx, raw: string): Promise<string> {
   const base = slugify(raw) || "team";
   let slug = base;
@@ -191,59 +176,71 @@ type TeamAccess = {
   role: TeamRole | null;
 };
 
-async function listTeamAccessForUser(
+async function accessibleMembership(
   ctx: DbCtx,
   userId: string,
-): Promise<TeamAccess[]> {
-  const memberships = await ctx.db
-    .query("teamMemberships")
-    .withIndex("by_userId", (q) => q.eq("userId", userId))
-    .collect();
-
-  return memberships.map((m) => ({ teamId: m.teamId, role: m.role }));
+  teamId: Id<"teams"> | undefined,
+) {
+  if (!teamId) return null;
+  const [team, member] = await Promise.all([
+    ctx.db.get(teamId),
+    ctx.db
+      .query("teamMemberships")
+      .withIndex("by_teamId_userId", (q) =>
+        q.eq("teamId", teamId).eq("userId", userId),
+      )
+      .unique(),
+  ]);
+  return team && team.status !== "deleted" && member ? member : null;
 }
 
 async function resolveDefaultAndActive(
   ctx: DbCtx,
   userId: string,
+  cursor: string | null = null,
 ): Promise<{
   defaultTeamId: Id<"teams"> | null;
   activeTeamId: Id<"teams"> | null;
   access: TeamAccess[];
+  continuationCursor: string | null;
 }> {
-  const [access, preferences] = await Promise.all([
-    listTeamAccessForUser(ctx, userId),
-    getUserPreferences(ctx, userId),
+  const preferences = await getUserPreferences(ctx, userId);
+  const [active, home] = await Promise.all([
+    accessibleMembership(ctx, userId, preferences?.activeTeamId),
+    accessibleMembership(ctx, userId, preferences?.defaultTeamId),
   ]);
-
-  if (access.length === 0) {
-    return { defaultTeamId: null, activeTeamId: null, access };
+  const selected = active ?? home;
+  if (selected)
+    return {
+      defaultTeamId: home?.teamId ?? selected.teamId,
+      activeTeamId: selected.teamId,
+      access: [{ teamId: selected.teamId, role: selected.role }],
+      continuationCursor: null,
+    };
+  const result = await paginator(ctx.db, schema)
+    .query("teamMemberships")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .paginate({
+      numItems: FALLBACK_PAGE_SIZE,
+      cursor,
+      maximumRowsRead: FALLBACK_PAGE_SIZE,
+    });
+  for (const member of result.page) {
+    const team = await ctx.db.get(member.teamId);
+    if (team && team.status !== "deleted")
+      return {
+        defaultTeamId: team._id,
+        activeTeamId: team._id,
+        access: [{ teamId: team._id, role: member.role }],
+        continuationCursor: null,
+      };
   }
-
-  const accessSet = new Set(access.map((a) => a.teamId));
-  const candidates: Array<Id<"teams">> = [];
-  if (preferences?.activeTeamId) candidates.push(preferences.activeTeamId);
-  if (preferences?.defaultTeamId) candidates.push(preferences.defaultTeamId);
-  for (const a of access) candidates.push(a.teamId);
-
-  const seen = new Set<Id<"teams">>();
-  const valid: Array<Id<"teams">> = [];
-  for (const teamId of candidates) {
-    if (seen.has(teamId)) continue;
-    seen.add(teamId);
-    if (!accessSet.has(teamId)) continue;
-    const team = await ctx.db.get(teamId);
-    if (!team || team.status === "deleted") continue;
-    valid.push(teamId);
-  }
-
-  const activeTeamId = valid[0] ?? null;
-  const defaultTeamId =
-    preferences?.defaultTeamId && valid.includes(preferences.defaultTeamId)
-      ? preferences.defaultTeamId
-      : activeTeamId;
-
-  return { defaultTeamId, activeTeamId, access };
+  return {
+    defaultTeamId: null,
+    activeTeamId: null,
+    access: [],
+    continuationCursor: result.isDone ? null : result.continueCursor,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -262,15 +259,14 @@ async function ensurePersonalTeamForUser(
   const preferences = await getOrCreateUserPreferences(ctx, userId);
   const personal = await ctx.db
     .query("teams")
-    .withIndex("by_personalOwnerUserId", (q) =>
-      q.eq("personalOwnerUserId", userId),
+    .withIndex("by_personalOwnerUserId_status", (q) =>
+      q.eq("personalOwnerUserId", userId).eq("status", "active"),
     )
-    .filter((q) => q.neq(q.field("status"), "deleted"))
     .first();
   if (personal)
     return {
       defaultTeamId: personal._id,
-      activeTeamId: preferences.activeTeamId ?? personal._id,
+      activeTeamId: personal._id,
     };
 
   // No owned team found — create one.
@@ -312,65 +308,69 @@ async function ensurePersonalTeamForUser(
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the list of teams the user is a member of, with role and
- * access flags. Default team is sorted first.
+ * Returns a bounded membership-order page of live teams.
+ * A page can be empty while deletion cleanup is in progress.
  */
 export const listForUser = query({
-  args: { userId: v.string() },
-  returns: v.array(
-    v.object({
-      teamId: v.string(),
-      teamPublicId: v.string(),
-      name: v.string(),
-      slug: v.string(),
-      status: v.union(
-        v.literal("active"),
-        v.literal("pending_payment"),
-        v.literal("deleted"),
-      ),
-      role: v.union(
-        v.literal("owner"),
-        v.literal("admin"),
-        v.literal("member"),
-      ),
-      access: v.object({
-        canRead: v.boolean(),
-        canWrite: v.boolean(),
-        canManage: v.boolean(),
-        canManageMembers: v.boolean(),
+  args: { userId: v.string(), paginationOpts: paginationOptsValidator },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        teamId: v.string(),
+        teamPublicId: v.string(),
+        name: v.string(),
+        slug: v.string(),
+        status: v.union(
+          v.literal("active"),
+          v.literal("pending_payment"),
+          v.literal("deleted"),
+        ),
+        role: v.union(
+          v.literal("owner"),
+          v.literal("admin"),
+          v.literal("member"),
+        ),
+        access: v.object({
+          canRead: v.boolean(),
+          canWrite: v.boolean(),
+          canManage: v.boolean(),
+          canManageMembers: v.boolean(),
+        }),
+        isDefaultTeam: v.boolean(),
+        isActiveTeam: v.boolean(),
       }),
-      isDefaultTeam: v.boolean(),
-      isActiveTeam: v.boolean(),
-    }),
-  ),
+    ),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
   handler: async (ctx, args) => {
-    const resolved = await resolveDefaultAndActive(ctx, args.userId);
-    const results = await Promise.all(
-      resolved.access.map(async (entry) => {
-        const team = await ctx.db.get(entry.teamId);
-        if (!team || team.status === "deleted") return null;
-        if (!entry.role) return null; // only return teams with a direct membership
-        return {
-          teamId: team._id,
-          teamPublicId: team.teamPublicId,
-          name: team.teamName,
-          slug: team.teamSlug,
-          status: team.status,
-          role: entry.role,
-          access: rolePermissions(entry.role),
-          isDefaultTeam: resolved.defaultTeamId === team._id,
-          isActiveTeam: resolved.activeTeamId === team._id,
-        };
-      }),
-    );
-    const visible = results.filter(
-      (t): t is NonNullable<typeof t> => t !== null,
-    );
-    return visible.sort((a, b) => {
-      if (a.isDefaultTeam && !b.isDefaultTeam) return -1;
-      if (!a.isDefaultTeam && b.isDefaultTeam) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    const options = boundedPagination(args.paginationOpts);
+    const preferences = await getUserPreferences(ctx, args.userId);
+    const result = await paginator(ctx.db, schema)
+      .query("teamMemberships")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .paginate(options);
+    const page = [];
+    for (const member of result.page) {
+      const team = await ctx.db.get(member.teamId);
+      if (!team || team.status === "deleted") continue;
+      page.push({
+        teamId: team._id,
+        teamPublicId: team.teamPublicId,
+        name: team.teamName,
+        slug: team.teamSlug,
+        status: team.status,
+        role: member.role,
+        access: rolePermissions(member.role),
+        isDefaultTeam: preferences?.defaultTeamId === team._id,
+        isActiveTeam: preferences?.activeTeamId === team._id,
+      });
+    }
+    return {
+      page,
+      isDone: result.isDone,
+      continueCursor: result.continueCursor,
+    };
   },
 });
 
@@ -552,7 +552,7 @@ export const listMembers = query({
     const result = await paginator(ctx.db, schema)
       .query("teamMemberships")
       .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
-      .paginate(args.paginationOpts);
+      .paginate(boundedPagination(args.paginationOpts));
     return {
       isDone: result.isDone,
       continueCursor: result.continueCursor,
@@ -1134,8 +1134,12 @@ export const transferOwnership = mutation({
   },
 });
 
-async function repairPreferences(ctx: MutationCtx, userId: string) {
-  const resolved = await resolveDefaultAndActive(ctx, userId);
+async function repairPreferences(
+  ctx: MutationCtx,
+  userId: string,
+  cursor: string | null = null,
+) {
+  const resolved = await resolveDefaultAndActive(ctx, userId, cursor);
   const preferences = await getUserPreferences(ctx, userId);
   if (preferences)
     await ctx.db.patch(preferences._id, {
@@ -1143,6 +1147,12 @@ async function repairPreferences(ctx: MutationCtx, userId: string) {
       activeTeamId: resolved.activeTeamId ?? undefined,
       updatedAt: Date.now(),
     });
+  if (resolved.continuationCursor !== null) {
+    await ctx.scheduler.runAfter(0, internal.teams.repairPreferencesInternal, {
+      userId,
+      cursor: resolved.continuationCursor,
+    });
+  }
   return resolved.activeTeamId ? await ctx.db.get(resolved.activeTeamId) : null;
 }
 
@@ -1184,4 +1194,14 @@ async function cleanupDeletedTeam(ctx: MutationCtx, teamId: Id<"teams">) {
 export const cleanupDeletedTeamInternal = internalMutation({
   args: { teamId: v.id("teams") },
   handler: async (ctx, args) => cleanupDeletedTeam(ctx, args.teamId),
+});
+
+/** Recheck preferences before each continuation so a user's later selection wins. */
+export const repairPreferencesInternal = internalMutation({
+  args: { userId: v.string(), cursor: v.union(v.string(), v.null()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await repairPreferences(ctx, args.userId, args.cursor);
+    return null;
+  },
 });

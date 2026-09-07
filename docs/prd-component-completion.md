@@ -279,3 +279,14 @@ The user confirmed `clipinfit/convex-teams` as the public repository and request
 Remaining release work includes the corrected convex-invite dependency, bounded per-user access reads, the legacy data policy, and the consumer migration rehearsal. Neither the component runtime nor any production migration has been released.
 
 Checkpoint `06562a9`, `test: verify concurrent workspace provisioning`, adds the two new concurrency checks and records the publication.
+
+
+## Bounded workspace reads checkpoint: 2026-09-07
+
+`listForUser` and `TeamsClient.listTeams` now require pagination options and return a page object. The API no longer collects or globally sorts all of a user's memberships. All public list requests accept 1 to 100 rows. Deleted workspace memberships can produce an empty page with `isDone: false`; consumers must continue using the cursor.
+
+Fallback resolution checks the two saved preferences by indexed membership lookup. If both are invalid, it scans 25 memberships per transaction. Cleanup schedules the next page when needed. Each continuation rechecks current preferences so a later explicit selection wins. During that interval, the active workspace or redirect can be null. Personal bootstrap always uses an accessible personal workspace when saved preferences are stale.
+
+Status-aware indexes bound slug and personal-workspace lookup. No runtime teams or invitation wrapper uses `.collect()`. Seat checks still read up to the trusted seat limit and need a final large-capacity review. Slug allocation retries also need a final workload review.
+
+Validation: 22 runtime tests pass. Type checks, lint, build, and package-content checks pass. The local backend still passes the final-seat race, concurrent personal bootstrap, and duplicate same-user grant proofs with the paginated API. Generated component types were regenerated through the example.

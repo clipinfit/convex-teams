@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { TeamsClient } from "../../src/client/index.js";
 import { components } from "./_generated/api.js";
@@ -17,11 +18,11 @@ export const create = mutation({
 });
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated.");
-    return teams.listTeams(ctx, identity.subject);
+    return teams.listTeams(ctx, identity.subject, args.paginationOpts);
   },
 });
 

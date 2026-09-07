@@ -242,23 +242,37 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       listForUser: FunctionReference<
         "query",
         "internal",
-        { userId: string },
-        Array<{
-          access: {
-            canManage: boolean;
-            canManageMembers: boolean;
-            canRead: boolean;
-            canWrite: boolean;
+        {
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
           };
-          isActiveTeam: boolean;
-          isDefaultTeam: boolean;
-          name: string;
-          role: "owner" | "admin" | "member";
-          slug: string;
-          status: "active" | "pending_payment" | "deleted";
-          teamId: string;
-          teamPublicId: string;
-        }>,
+          userId: string;
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            access: {
+              canManage: boolean;
+              canManageMembers: boolean;
+              canRead: boolean;
+              canWrite: boolean;
+            };
+            isActiveTeam: boolean;
+            isDefaultTeam: boolean;
+            name: string;
+            role: "owner" | "admin" | "member";
+            slug: string;
+            status: "active" | "pending_payment" | "deleted";
+            teamId: string;
+            teamPublicId: string;
+          }>;
+        },
         Name
       >;
       listMembers: FunctionReference<

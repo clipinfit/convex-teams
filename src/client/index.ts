@@ -16,8 +16,11 @@ type ActionCtx = Pick<GenericActionCtx<GenericDataModel>, "runMutation">;
 export class TeamsClient {
   constructor(public readonly component: ComponentApi) {}
 
-  listTeams(ctx: QueryCtx, userId: string) {
-    return ctx.runQuery(this.component.teams.listForUser, { userId });
+  listTeams(ctx: QueryCtx, userId: string, paginationOpts: PaginationOptions) {
+    return ctx.runQuery(this.component.teams.listForUser, {
+      userId,
+      paginationOpts,
+    });
   }
   getTeamBySlug(ctx: QueryCtx, userId: string, teamSlug: string) {
     return ctx.runQuery(this.component.teams.getBySlug, { userId, teamSlug });
