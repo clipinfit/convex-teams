@@ -47,8 +47,8 @@ Use `revokeInvite` to revoke an invitation. Expired, revoked, and wrong-recipien
 
 Call `pruneInvitations` from trusted host maintenance. The child expires pending records and removes terminal records after its 90-day retention period. Each call is bounded. Run enough batches for your invitation volume.
 
-## Dependency release blocker
+## Dependency version
 
-The published `convex-invite@0.1.0` uses native pagination that Convex rejects inside component mounts. This repository applies a Bun patch. A corrected source version is prepared in [invite PR #1](https://github.com/dciccale/convex-invite/pull/1).
+Teams uses `convex-invite@0.1.1`. This release fixes all three management lists inside Convex component mounts by using schema-aware pagination. The former local Bun patch is no longer required.
 
-A clean npm consumer cannot depend on the repository patch. A corrected invite release remains a prerequisite for the teams runtime release.
+See the [0.1.1 release notes](https://github.com/dciccale/convex-invite/releases/tag/v0.1.1).

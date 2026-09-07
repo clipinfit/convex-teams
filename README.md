@@ -61,7 +61,7 @@ The proof creates a development fixture. One direct grant and one invitation acc
 
 Teams mounts `convex-invite` as its child. The host mounts only teams. See [the example configuration](packages/example-backend/convex/convex.config.ts).
 
-`convex-invite@0.1.0` requires the tracked Bun patch in `patches/`. Its published list queries use Convex's built-in pagination, which does not run inside a component. The patch uses `convex-helpers` pagination. The [Convex component documentation](https://docs.convex.dev/components/authoring#pagination) describes this restriction. A corrected invite release is required before an independent teams package can pass a clean consumer installation without this patch.
+Teams uses the published `convex-invite@0.1.1` dependency. This version fixes invitation pagination inside component mounts. No local dependency patch is required.
 
 ## Host integration
 

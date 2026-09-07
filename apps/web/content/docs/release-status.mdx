@@ -18,16 +18,15 @@ The component and host suite covers ownership, role preservation, invitation acc
 
 Actual local Convex transactions also verify the final-seat race, concurrent personal bootstrap, and duplicate membership grants.
 
-A clean packed npm consumer passes with the corrected local invite archive. This does not validate the unchanged registry dependency.
+The invite pagination fix is published as `convex-invite@0.1.1`. Teams uses that version without a local patch. A clean packed npm consumer passes against registry dependencies, including a local backend check of pagination and acceptance rollback.
 
 ## Remaining release gates
 
-1. Publish a corrected convex-invite version, update the teams dependency, and remove the temporary Bun patch.
-2. Complete the large-capacity seat check and slug allocation workload review.
-3. Decide the legacy data policy from deployment evidence.
-4. Add stable-identifier imports and rehearse a real development consumer migration.
-5. Complete attribution and supported-version checks.
-6. Pass the clean packed consumer check using registry dependencies only.
+1. Complete the large-capacity seat check and slug allocation workload review.
+2. Decide the legacy data policy from deployment evidence.
+3. Add stable-identifier imports and rehearse a real development consumer migration.
+4. Complete attribution and supported-version checks.
+5. Repeat the registry-only packed consumer check on the final release candidate.
 
 Track the [completion PRD](https://github.com/clipinfit/convex-teams/blob/main/docs/prd-component-completion.md) and the [invite pagination fix](https://github.com/dciccale/convex-invite/pull/1).
 

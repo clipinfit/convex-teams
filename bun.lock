@@ -37,7 +37,7 @@
       "version": "0.1.0-alpha.0",
       "dependencies": {
         "convex-helpers": "^0.1.124",
-        "convex-invite": "0.1.0",
+        "convex-invite": "0.1.1",
       },
       "devDependencies": {
         "@biomejs/biome": "2.4.7",
@@ -69,9 +69,6 @@
         "vitest": "4.1.10",
       },
     },
-  },
-  "patchedDependencies": {
-    "convex-invite@0.1.0": "patches/convex-invite@0.1.0.patch",
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.3.0", "", {}, "sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA=="],
@@ -510,7 +507,7 @@
 
     "convex-helpers": ["convex-helpers@0.1.124", "", { "peerDependencies": { "@standard-schema/spec": "^1.0.0", "convex": "^1.43.0", "hono": "^4.0.5", "react": "^17.0.2 || ^18.0.0 || ^19.0.0", "typescript": "^5.5 || ^6.0.0 || ^7.0.0", "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["@standard-schema/spec", "hono", "react", "typescript", "zod"], "bin": { "convex-helpers": "bin.cjs" } }, "sha512-Gbu/jq6I3x5Y51cXP5c7+CI3t15vX5Xi2G0tOym3rxpBtYqrI+qWwxkqZgJYrHHccY42wZudB8h6kS3fak8Aeg=="],
 
-    "convex-invite": ["convex-invite@0.1.0", "", { "peerDependencies": { "convex": ">=1.43.0" } }, "sha512-yL0yf+ehvHt6yXA/Jhro1fa/V0TChZyvCjgBmBZTr8wpoStTyCdh5Kg5O8kF0UoaMW7m1cUEXDqhsw5OusHDkg=="],
+    "convex-invite": ["convex-invite@0.1.1", "", { "dependencies": { "convex-helpers": "0.1.124" }, "peerDependencies": { "convex": ">=1.43.0" } }, "sha512-a4/hRrCZE/y0QU1+4qMQi9TU/6Pdb7rZ53UwbBoopLlxBWZeCgrBwJmP7XLoK7yhfAac/QpS3gk9yPo6SR2bOA=="],
 
     "convex-teams": ["convex-teams@workspace:packages/convex-teams"],
 

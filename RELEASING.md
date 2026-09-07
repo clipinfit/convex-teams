@@ -24,7 +24,7 @@ Complete npm browser sign-in or 2FA locally when requested. Never commit npm cre
 
 ## Publish a component prerelease
 
-1. Replace the invite patch with a corrected published dependency. A downstream install cannot rely on this repository's Bun patch.
+1. Use published dependencies without local patches. Teams now uses the corrected `convex-invite@0.1.1` release.
 2. Complete the required PRD tests, the consumer rehearsal, and a clean packed installation.
 3. Update `CHANGELOG.md`. For a subsequent alpha, run `bun run version:alpha`. Review `packages/convex-teams/package.json` and the root `bun.lock`.
 4. Run the checks below. Commit and push the release candidate.
@@ -38,6 +38,7 @@ bun run lint
 bun run test
 bun run build
 bun run pack:check
+bun run pack:smoke
 ```
 
 `prepublishOnly` rejects the source package while it has a dependency patch or uncommitted changes. This guard is only a mechanical check. It does not establish consumer readiness. Do not bypass it to publish the component.
@@ -48,16 +49,16 @@ Published versions are immutable. Prepare a new version to correct a published a
 
 Run `bun run pack:smoke` to build the package and install its archive in a fresh temporary npm project. The check validates exported types, the test registration helper, the mounted component tree, invitation pagination, and acceptance rollback on a local Convex backend. It requires Node.js, npm, and access to download the Convex backend. The temporary project is retained for inspection.
 
-Until a corrected invite version is published, the registry dependency blocks this check. To validate an unpublished invite correction, pass its archive:
+The registry-only check uses the published `convex-invite@0.1.1` dependency. To evaluate a future unpublished invite correction, pass an archive whose version satisfies the teams dependency:
 
 ```sh
 bun run pack:smoke /absolute/path/convex-invite-candidate.tgz
 ```
 
-A candidate result validates that archive only. Before publication, replace the patched dependency with its corrected registry version, remove the patch, and rerun `bun run pack:smoke` without an argument. A local candidate does not satisfy this release gate.
+A candidate result validates that archive only. Before publication, run `bun run pack:smoke` without an argument. A local candidate does not satisfy this release gate.
 
 ## Monorepo package boundaries
 
 The repository root is private. Publish only from `packages/convex-teams`. Keep its `CHANGELOG.md` and `LICENSE` synchronized with the root copies before a release. The package README uses GitHub links so they also work on npm.
 
-The invite development patch belongs to the workspace root. The component publication guard reads that root manifest and rejects publication while the patch is present. Website deployments do not publish an npm package.
+The invite development patch was removed after `convex-invite@0.1.1` was published. The component publication guard still rejects workspace dependency patches and uncommitted changes. Website deployments do not publish an npm package.

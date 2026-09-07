@@ -2,6 +2,8 @@
 
 ## Unreleased: 0.1.0-alpha.0
 
+- Use the published convex-invite 0.1.1 pagination fix and remove the local Bun patch.
+
 - Require pagination for team listing and bound all list requests to 100 rows.
 - Continue fallback repair in 25-membership batches without overriding later selections.
 - Reject stale preferences during personal bootstrap.
@@ -14,7 +16,7 @@
 - Verify concurrent personal bootstrap and duplicate membership grants on the local backend.
 - Establish the convex-teams package and clipinfit/convex-teams repository identities.
 
-The component package is not published yet. The invite pagination patch and the other release requirements in the PRD remain open.
+The component package is not published yet. The invite dependency blocker is resolved. The remaining release requirements are recorded in the PRD.
 
 ## 0.0.0-development.0 - 2026-09-07
 

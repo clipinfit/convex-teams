@@ -28,8 +28,5 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.7",
     "turbo": "2.10.8"
-  },
-  "patchedDependencies": {
-    "convex-invite@0.1.0": "patches/convex-invite@0.1.0.patch"
   }
 }

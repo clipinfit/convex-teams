@@ -329,3 +329,14 @@ The Vercel project is `convex-teams` under the `clipin` team, with `apps/web` as
 Vercel production deployment succeeded from checkpoint `9b8dbef`, which pins Bun 1.4.0 for Vercel's build environment. The first attempt used Vercel's older Bun and could not parse the lockfile. The live website is [convex-teams.vercel.app](https://convex-teams.vercel.app), with docs at [/docs](https://convex-teams.vercel.app/docs). The project is connected to GitHub for production deployments from `main`.
 
 GitHub CI passed for the monorepo and Bun fix. Public HTTP checks passed for the landing page and all seven docs routes. Production search returns relevant results. See [website deployment](website-deployment.md) for repeatable deployment commands. No component runtime was published.
+
+
+## Invite dependency released: 2026-09-07
+
+The user authorized publication of the invite correction. [PR #1](https://github.com/dciccale/convex-invite/pull/1) is merged. `convex-invite@0.1.1` is published on npm with `latest` pointing to it. The exact source commit is `fe5103072db3d8ee78d3be5776492ce9c1c22c7b`, tagged `v0.1.1`. [Release notes](https://github.com/dciccale/convex-invite/releases/tag/v0.1.1) are available.
+
+The registry archive integrity matches the tested release archive: `sha512-a4/hRrCZE/y0QU1+4qMQi9TU/6Pdb7rZ53UwbBoopLlxBWZeCgrBwJmP7XLoK7yhfAac/QpS3gk9yPo6SR2bOA==`. The invite release passed 26 package tests, 4 host tests, full release checks, a clean package verification, and the dependency audit. The exact archive also passed the teams local backend smoke check before publication.
+
+Teams now pins `convex-invite@0.1.1`. The `patches` directory and workspace `patchedDependencies` entry are removed. `bun run pack:smoke` passed without a candidate argument. Its fresh npm installation used the registry version, registered both components, read two invitation pages, and verified acceptance rollback and retry after a capacity failure. All 22 teams tests, type checks, lint, docs links, builds, and package-content checks pass.
+
+The invite dependency blocker is resolved. Remaining teams release work is the capacity and slug workload review, legacy data policy, stable-identifier imports and consumer rehearsal, attribution, and supported-version checks. Re-run the registry-only smoke check on the final release candidate. The teams runtime remains unpublished at `0.1.0-alpha.0`.
