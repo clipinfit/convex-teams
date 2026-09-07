@@ -1,4 +1,4 @@
-import { register } from "convex-teams/test";
+import { register } from "@clipin/convex-teams/test";
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api, components, internal } from "./_generated/api.js";

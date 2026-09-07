@@ -4,7 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
 const examples = {
-  mount: `// convex/convex.config.ts\nimport { defineApp } from "convex/server";\nimport teams from "convex-teams/convex.config.js";\n\nconst app = defineApp();\napp.use(teams);\n\nexport default app;`,
+  mount: `// convex/convex.config.ts\nimport { defineApp } from "convex/server";\nimport teams from "@clipin/convex-teams/convex.config.js";\n\nconst app = defineApp();\napp.use(teams);\n\nexport default app;`,
   create: `// Inside an authenticated host mutation\nconst identity = await ctx.auth.getUserIdentity();\nif (!identity) throw new Error("Not authorized.");\n\nconst team = await teams.createTeam(\n  ctx,\n  identity.subject,\n  "Studio workspace",\n);`,
 };
 export function CodeExample() {

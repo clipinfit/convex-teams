@@ -1,5 +1,5 @@
 {
-  "name": "convex-teams",
+  "name": "@clipin/convex-teams",
   "version": "1.0.0",
   "description": "Convex workspaces with membership, ownership, preferences, and convex-invite integration.",
   "license": "Apache-2.0",

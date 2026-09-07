@@ -1,12 +1,12 @@
 ---
 title: Install and run teams
-description: Install the release candidate and run the local example.
+description: Install the component and run the local example.
 ---
 
-Install the published release candidate in your Convex application:
+The organization package is prepared for publication. After release, install the component in your Convex application:
 
 ```sh
-npm install convex-teams@1.0.0-rc.0
+npm install @clipin/convex-teams@1.0.0
 ```
 
 Use Convex `>=1.43.0 <2.0.0`. The invitation dependency installs automatically. Mount teams with the configuration below, then run `npx convex dev` in your application to generate its component API.
@@ -60,7 +60,7 @@ The seat proof must return one successful grant, one rejected grant, and two mem
 
 ```ts
 import { defineApp } from "convex/server";
-import teams from "convex-teams/convex.config.js";
+import teams from "@clipin/convex-teams/convex.config.js";
 
 const app = defineApp();
 app.use(teams);
@@ -70,7 +70,7 @@ export default app;
 Create a client in your host functions:
 
 ```ts
-import { TeamsClient } from "convex-teams";
+import { TeamsClient } from "@clipin/convex-teams";
 import { components } from "./_generated/api.js";
 
 export const teams = new TeamsClient(components.teams);

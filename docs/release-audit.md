@@ -44,3 +44,7 @@ sha512-6DdvXz3evNvOtIMXgF3xzFbLP93OamlUkOEntWWdMAro4MBcroP88qoaAMKuNIb+69vc7etnr
 ```
 
 Clean registry installations passed on Convex 1.43.0 and 1.45.0. Pedalclass passed all 24 backend tests. Feedtwin passed its source comparison and native authenticated lifecycle checks. Each command used `TEAMS_RELEASE_VERSION=1.0.0-rc.0`; no local teams archive supplied the runtime.
+
+## Organization rename
+
+The first stable package is now `@clipin/convex-teams`. Earlier registry evidence above applies to the unscoped candidate only. Repeat clean scoped installation checks before publication and verify the scoped registry artifact after publication. The historical unscoped package must be removed after the replacement is verified.

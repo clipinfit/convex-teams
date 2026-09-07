@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const manifest = JSON.parse(readFileSync("package.json", "utf8"));
-assert.equal(manifest.name, "convex-teams");
+assert.equal(manifest.name, "@clipin/convex-teams");
 assert.equal(
   Object.keys(
     JSON.parse(

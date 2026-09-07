@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { TeamsClient } from "convex-teams";
+import { TeamsClient } from "@clipin/convex-teams";
 import { components } from "./_generated/api";
 import { internalMutation, query, mutation } from "./_generated/server";
 import { assertProjectAccessForTeam } from "./lib/auth";

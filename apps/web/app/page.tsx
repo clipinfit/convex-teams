@@ -34,7 +34,7 @@ export default function Home() {
           <div className="hero-copy">
             <Link href="/docs/release-status" className="release-pill">
               <span />
-              Release candidate available <ArrowRight size={13} />
+              Preparing the organization release <ArrowRight size={13} />
             </Link>
             <p className="eyebrow">OPEN SOURCE / CONVEX COMPONENT</p>
             <h1>
@@ -56,7 +56,7 @@ export default function Home() {
               </a>
             </div>
             <p className="availability">
-              Install the runtime candidate with npm install convex-teams@next.
+              The first stable package will be @clipin/convex-teams.
             </p>
           </div>
           <div

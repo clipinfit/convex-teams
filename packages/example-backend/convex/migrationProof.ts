@@ -1,5 +1,5 @@
+import { TeamsClient } from "@clipin/convex-teams";
 import { v } from "convex/values";
-import { TeamsClient } from "convex-teams";
 import { components, internal } from "./_generated/api.js";
 import {
   internalAction,

@@ -94,7 +94,7 @@ try {
       'import { defineConfig } from "vitest/config"; export default defineConfig({test:{environment:"edge-runtime",include:["convex/**/*.test.ts"]}});',
     );
   }
-  backendManifest.dependencies["convex-teams"] =
+  backendManifest.dependencies["@clipin/convex-teams"] =
     registryVersion ?? `file:${join(directory, archive.filename)}`;
   writeFileSync(
     join(backend, "package.json"),
@@ -108,7 +108,7 @@ try {
   const config = join(backend, "convex/convex.config.ts");
   writeFileSync(
     config,
-    'import teams from "convex-teams/convex.config.js";\n' +
+    'import teams from "@clipin/convex-teams/convex.config.js";\n' +
       readFileSync(config, "utf8").replace(
         "export default app;",
         "app.use(teams);\nexport default app;",
@@ -256,7 +256,7 @@ try {
     JSON.stringify({
       directory,
       source,
-      package: `convex-teams@${archive.version}`,
+      package: `@clipin/convex-teams@${archive.version}`,
       originalConsumerChanged: false,
     }),
   );

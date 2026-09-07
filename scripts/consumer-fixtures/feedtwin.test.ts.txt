@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { register } from "convex-teams/test";
+import { register } from "@clipin/convex-teams/test";
 import { expect, test } from "vitest";
 import { components } from "./_generated/api";
 import { assertProjectAccessForTeam } from "./lib/auth";

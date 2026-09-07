@@ -3,9 +3,9 @@ title: Client reference
 description: TeamsClient methods in the current development API.
 ---
 
-Import `TeamsClient` from `convex-teams` and pass the generated `components.teams` reference. These methods run inside host Convex functions.
+Import `TeamsClient` from `@clipin/convex-teams` and pass the generated `components.teams` reference. These methods run inside host Convex functions.
 
-The API targets the first release candidate, `1.0.0-rc.0`. See the [typed client source](https://github.com/clipinfit/convex-teams/blob/main/packages/convex-teams/src/client/index.ts) for exact argument types.
+The API targets the first stable version, `1.0.0`. See the [typed client source](https://github.com/clipinfit/convex-teams/blob/main/packages/convex-teams/src/client/index.ts) for exact argument types.
 
 ## Queries
 
@@ -61,9 +61,9 @@ These methods are for internal migration jobs. They do not authenticate a caller
 
 | Export | Purpose |
 | --- | --- |
-| `convex-teams` | Client and public types. |
-| `convex-teams/convex.config.js` | Component configuration to mount in the host. |
-| `convex-teams/types` | Public result types. |
-| `convex-teams/test` | Register teams and its invite child with convex-test. |
+| `@clipin/convex-teams` | Client and public types. |
+| `@clipin/convex-teams/convex.config.js` | Component configuration to mount in the host. |
+| `@clipin/convex-teams/types` | Public result types. |
+| `@clipin/convex-teams/test` | Register teams and its invite child with convex-test. |
 
-The npm name-claim package does not contain these exports yet. Evaluate them from the [source workspace](/docs/getting-started).
+The scoped package includes these exports. See the [installation guide](/docs/getting-started) and current [release status](/docs/release-status).

@@ -1,4 +1,4 @@
-# convex-teams
+# @clipin/convex-teams
 
 [Website](https://convex-teams.vercel.app) · [Documentation](https://convex-teams.vercel.app/docs)
 
@@ -7,7 +7,7 @@ A Convex component for workspace identity, membership, ownership, and preference
 Version `1.0.0` provides team identity, fixed owner/admin/member roles, invitations, and stable-ID imports. It uses `convex-invite@0.1.1` for the invitation lifecycle.
 
 ```sh
-npm install convex-teams@1.0.0
+npm install @clipin/convex-teams@1.0.0
 ```
 
 Use Convex `>=1.43.0 <2.0.0`. Mount the component and create a trusted host client as shown in the [getting started guide](https://convex-teams.vercel.app/docs/getting-started).

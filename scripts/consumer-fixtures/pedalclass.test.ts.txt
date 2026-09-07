@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { AUDIO_RIGHTS_POLICY_VERSION, demoWorkoutClasses } from "@pedalclass/workout-core";
 import { convexTest } from "convex-test";
-import { register } from "convex-teams/test";
+import { register } from "@clipin/convex-teams/test";
 import { expect, test } from "vitest";
 import { api, components } from "./_generated/api";
 import schema from "./schema";

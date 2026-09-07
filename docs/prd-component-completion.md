@@ -437,3 +437,9 @@ The trusted `getTeamState` query returns current workspace metadata or null for 
 The native Feedtwin development copy now exercises authenticated selection, verified invitation acceptance, member removal, stale-token rejection, ownership transfer, and deletion. This meets the development-consumer rehearsal gate. It does not switch production traffic or replace production host adapters.
 
 Contribution guidance, attribution notices, and a private security-reporting channel are in place. GitHub private vulnerability reporting is enabled. Root and package licenses remain Apache-2.0, and the package includes NOTICE. Source history attributes the baseline to the maintainer; runtime dependency metadata identifies both dependencies as Apache-2.0.
+
+## npm organization decision: 2026-09-07
+
+The maintainer selected `@clipin/convex-teams` for the first stable release. The npm organization is `clipin`; `denis` is a verified owner. The GitHub repository remains `clipinfit/convex-teams`. Replace unscoped dependency names and imports with the scoped name. The component mount stays `teams`, so this package rename does not change stored team IDs or component paths.
+
+The unscoped 1.0.0 publish was canceled before publication. After scoped publication and registry validation, remove the historical unscoped name claim and candidate if npm permits it. Do not retain an unscoped forwarding package to reserve the name.

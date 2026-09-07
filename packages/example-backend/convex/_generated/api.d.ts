@@ -53,5 +53,5 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  teams: import("convex-teams/_generated/component.js").ComponentApi<"teams">;
+  teams: import("@clipin/convex-teams/_generated/component.js").ComponentApi<"teams">;
 };

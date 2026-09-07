@@ -9,7 +9,7 @@ const [artifact] = JSON.parse(
   }),
 );
 const files = new Set(artifact.files.map((file) => file.path));
-assert.equal(manifest.name, "convex-teams");
+assert.equal(manifest.name, "@clipin/convex-teams");
 for (const required of [
   "LICENSE",
   "NOTICE",

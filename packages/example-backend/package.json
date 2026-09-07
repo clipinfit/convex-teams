@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "convex": "1.43.0",
-    "convex-teams": "workspace:*"
+    "@clipin/convex-teams": "workspace:*"
   },
   "devDependencies": {
     "typescript": "7.0.2",

@@ -52,7 +52,7 @@ try {
           "@edge-runtime/vm": "5.0.0",
         },
         dependencies: {
-          "convex-teams":
+          "@clipin/convex-teams":
             registryVersion ?? `file:${join(directory, artifact.filename)}`,
           convex: convexVersion,
           ...(candidate ? { "convex-invite": `file:${candidate}` } : {}),
@@ -70,7 +70,7 @@ try {
   );
   writeFileSync(
     join(directory, "convex/convex.config.ts"),
-    `import { defineApp } from "convex/server";\nimport teams from "convex-teams/convex.config.js";\nconst app = defineApp(); app.use(teams); export default app;\n`,
+    `import { defineApp } from "convex/server";\nimport teams from "@clipin/convex-teams/convex.config.js";\nconst app = defineApp(); app.use(teams); export default app;\n`,
   );
   writeFileSync(
     join(directory, "convex/schema.ts"),
@@ -80,7 +80,7 @@ try {
     join(directory, "convex/proof.ts"),
     `
 import { v } from "convex/values";
-import { TeamsClient } from "convex-teams";
+import { TeamsClient } from "@clipin/convex-teams";
 import { components } from "./_generated/api.js";
 import { internalMutation } from "./_generated/server.js";
 const teams = new TeamsClient(components.teams);
@@ -130,7 +130,7 @@ export const run = internalMutation({
     `
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { register } from "convex-teams/test";
+import { register } from "@clipin/convex-teams/test";
 import schema from "./convex/schema.js";
 import { internal } from "./convex/_generated/api.js";
 test("packed component registration and grant rollback", async () => {
