@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 - 2026-09-12
+
+- Rewrite the README around component features, setup, and authenticated usage examples.
+- Remove repository tooling and dependency details. Clarify migration support.
+- No runtime or API changes.
+
 ## 1.0.0 - 2026-09-07
 
 - Publish as @clipin/convex-teams under the existing npm organization. Update all package imports.

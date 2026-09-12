@@ -34,7 +34,7 @@
     },
     "packages/convex-teams": {
       "name": "@clipin/convex-teams",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "convex-helpers": "^0.1.124",
         "convex-invite": "0.1.1",

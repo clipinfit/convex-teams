@@ -1,6 +1,6 @@
 {
   "name": "@clipin/convex-teams",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convex workspaces with membership, ownership, preferences, and convex-invite integration.",
   "license": "Apache-2.0",
   "homepage": "https://convex-teams.vercel.app",

@@ -2,89 +2,84 @@
 
 [Website](https://convex-teams.vercel.app) · [Documentation](https://convex-teams.vercel.app/docs)
 
-A Convex component for workspace identity, membership, ownership, and preferences. Public API names use `team` for a workspace.
+A Convex component for adding teams and shared workspaces to your app. It manages team profiles, members, roles, invitations, and workspace selection. The API calls each workspace a `team`.
 
-Version `1.0.0` provides team identity, fixed owner/admin/member roles, invitations, and stable-ID imports. It uses `convex-invite@0.1.1` for the invitation lifecycle.
+Use it to let users create a team, invite collaborators, switch workspaces, and manage access to their team.
 
-```sh
-npm install @clipin/convex-teams@1.0.0
-```
+## Features
 
-Use Convex `>=1.43.0 <2.0.0`. Mount the component and create a trusted host client as shown in the [getting started guide](https://convex-teams.vercel.app/docs/getting-started).
+- Shared and personal teams with unique slugs and stable public IDs.
+- Owner, admin, and member roles with ownership transfer.
+- Invitations with expiry, resend, revocation, and verified recipient acceptance.
+- Seat limits enforced when a member joins, including concurrent requests.
+- Active and default team preferences for each user.
+- Paginated team, member, and pending invitation lists.
+- Team deletion with background membership cleanup and preference repair.
 
-See [the changelog](CHANGELOG.md) and [release procedure](RELEASING.md) for versioning and release requirements.
+Your app provides authentication, invitation delivery, billing, and permissions for its own content.
 
-## Workspace layout
+## Quick start
 
-- `packages/convex-teams`: publishable component and its runtime tests.
-- `packages/example-backend`: host integration and concurrency proofs.
-- `apps/web`: Next.js website and searchable Fumadocs documentation.
-- `docs`: implementation plans and migration records.
-
-Bun manages dependencies. Turborepo runs build, type checks, and tests across packages. Run `bun run dev:web` for the website or `bun run dev:example` for the local backend.
-
-See [website deployment](docs/website-deployment.md) for Vercel settings and deployment commands.
-
-## Run the development example
-
-Use Bun 1.4.0 and Node.js 22 or later.
+Install the component in your Convex app. It requires Convex `>=1.43.0 <2.0.0`.
 
 ```sh
-bun install --frozen-lockfile
-bun run build
-cd packages/example-backend
-bun run dev
+npm install @clipin/convex-teams@1.0.1
 ```
 
-The example uses an anonymous local Convex deployment. It does not connect to Feedtwin or production data. From another terminal, run these commands at the repository root:
+Register the component in `convex/convex.config.ts`:
 
-```sh
-bun run codegen
-bun run typecheck
-bun run test
-bun run lint
-bun run build
-bun run pack:check
+```ts
+import { defineApp } from "convex/server";
+import teams from "@clipin/convex-teams/convex.config.js";
+
+const app = defineApp();
+app.use(teams);
+export default app;
 ```
 
-Run the backend concurrency proof from `packages/example-backend`:
+Run `npx convex dev` to generate the component API. Then create a client and expose authenticated functions in `convex/teams.ts`:
 
-```sh
-bunx convex run proof:run
-bunx convex run proof:concurrentBootstrap
-bunx convex run proof:concurrentDuplicateGrant
-bunx convex run proof:largeSeatLimit
-bunx convex run proof:concurrentSlugs
-bunx convex run migrationProof:run
-bunx convex run migrationProof:runLifecycle
-bunx convex run migrationProof:runRecovery
+```ts
+import { TeamsClient } from "@clipin/convex-teams";
+import { paginationOptsValidator } from "convex/server";
+import { v } from "convex/values";
+import { components } from "./_generated/api.js";
+import { mutation, query } from "./_generated/server.js";
+
+const teams = new TeamsClient(components.teams);
+
+export const create = mutation({
+	args: { name: v.string() },
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) throw new Error("Not authorized.");
+		return teams.createTeam(ctx, identity.subject, args.name);
+	},
+});
+
+export const list = query({
+	args: { paginationOpts: paginationOptsValidator },
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) throw new Error("Not authorized.");
+		return teams.listTeams(ctx, identity.subject, args.paginationOpts);
+	},
+});
 ```
 
-The proof creates a development fixture. One direct grant and one invitation acceptance compete for the final seat. The expected result is one successful grant, one rejected grant, and two members.
+Call `api.teams.create` with `{ name: "Design studio" }` from your app. The result includes `teamId`, `teamPublicId`, `teamSlug`, and `teamName`. The authenticated user becomes the owner.
 
-## Component ownership
+Call `api.teams.list` with `{ paginationOpts: { numItems: 25, cursor: null } }` to read that user's teams.
 
-| Component | Responsibility |
-| --- | --- |
-| `convex-teams` | Team identity, membership, roles, ownership transfer, preferences, invitation scope, and membership grants |
-| `convex-invite` | Tokens, expiry, resend, revocation, acceptance, and delivery metadata |
-| Host application | Authentication, verified email, current seat policy, message delivery, billing, and content permissions |
+The example uses `identity.subject` as the user ID. Use the same authenticated user ID for all component calls. Derive identity in your backend; do not accept a caller-supplied user ID as proof of identity.
 
-Teams mounts `convex-invite` as its child. The host mounts only teams. See [the example configuration](packages/example-backend/convex/convex.config.ts).
-
-Teams uses the published `convex-invite@0.1.1` dependency. This version fixes invitation pagination inside component mounts. No local dependency patch is required.
-
-## Host integration
-
-Create a `TeamsClient` with your host's generated `components.teams` reference. The client methods accept contexts from host Convex functions. The [host example](packages/example-backend/convex/teams.ts) derives the actor from authentication and checks that the invitation recipient has a verified email.
-
-Never expose a submitted actor ID or email as trusted identity. Component functions become internal references in the host. Host wrappers determine which operations clients can call.
-
-The host must check membership before each protected content operation. An active-team preference does not grant access to host tables, files, or media URLs.
+See the [API reference](https://convex-teams.vercel.app/docs/api) for all client methods.
 
 ## Slug allocation
 
-Creation tries at most five slug candidates. The first shared workspace can use the name alone. Collisions use a random suffix instead of a sequential number. Personal workspaces always use a random suffix. Generated slugs stay within 60 characters. If all attempts collide, creation fails atomically and the host can retry.
+A slug identifies a team in URLs. Shared teams first try a slug based on the team name. If that slug is taken, the component adds a random suffix. Personal teams always use a random suffix.
+
+Generated slugs stay within 60 characters. Creation tries at most five candidates. If all candidates collide, creation fails without creating a team. Your app can retry.
 
 ## Roles
 
@@ -98,60 +93,74 @@ Creation tries at most five slug candidates. The first shared workspace can use 
 | Delete team | Yes | No | No |
 | Leave team | Transfer ownership first | Yes | Yes |
 
-Each team has one owner. `transferOwnership` changes the owner record and both membership roles in one transaction. The former owner becomes an admin. Invitations and direct grants preserve an existing role. Use `updateMemberRole` for an explicit role change.
+Each team has one owner. `transferOwnership` transfers ownership to an existing member in one transaction. The former owner becomes an admin.
 
-Personal team creation is an explicit host operation through `ensurePersonalTeam`. A personal team has a separate personal-owner field. Default-team selection does not define personal ownership. Personal ownership cannot be transferred. Invitation acceptance does not create a personal team.
+Invitations and direct membership grants preserve an existing role. Use `updateMemberRole` to change a non-owner's role.
+
+## Personal teams and workspace selection
+
+Use `ensurePersonalTeam` to create a user's personal team if it does not already exist. Personal ownership cannot be transferred. Accepting an invitation does not create a personal team.
+
+Use `setActiveTeam` to select the user's current workspace and `setDefaultTeam` to save their default workspace. Read these preferences with `getActiveTeam` and `getDefaultTeam`. Selecting a default team does not make it a personal team.
+
+Preferences do not grant access to your app's data. Check current membership before each protected content operation.
 
 ## Seats and invitations
 
-Pending invitations do not reserve seats. On each `acceptInvite` or trusted `addMember` call, pass the current `seatLimit` from host configuration. Read that configuration in the same host mutation. Omit the limit only for an unlimited policy. A limit must be a nonnegative safe integer. The owner consumes a seat.
+Use `createInvite`, `resendInvite`, and `revokeInvite` to manage invitations. A duplicate pending invitation produces `INVITATION_ALREADY_PENDING`. Resending rotates the token; use the invitation ID returned by `resendInvite`.
 
-Seat checks read a stored membership count instead of scanning the team's members. Creation, grants, removal, and leave update that count in the same transaction. Duplicate grants and role changes do not increase it. Concurrent grants still contend on the team record so they cannot oversubscribe the final seat.
+Use `acceptInvite` to grant membership to the authenticated recipient. Your backend must supply their verified email and the current `seatLimit`. Read the limit from your app's configuration in the same mutation that accepts the invitation. Apply the same policy to direct grants through `addMember`, which belongs in internal provisioning functions.
 
-For team records created before count tracking, the owner must call `prepareMembershipCount(ctx, userId, teamSlug)` through an authenticated host mutation. It returns `counting` until background batches of at most 100 memberships finish, then returns `ready`. New grants, including invitation acceptance, fail until the count is ready. Existing access, removal, leave, and deletion remain available. A removal during counting restarts the scan. Repeated preparation and count-job delivery are safe.
+The owner consumes a seat. Pending invitations do not reserve seats. Omit `seatLimit` only for unlimited teams. A limit must be a nonnegative safe integer.
 
-A capacity failure rolls back both child invitation acceptance and the new membership. Existing members retain access after a limit reduction. Repeated acceptance preserves the member's current role. A previously accepted invitation cannot restore a removed member.
+Concurrent requests cannot exceed the seat limit. Duplicate grants and role changes do not consume extra seats. If a team is full, acceptance fails without consuming the invitation. Retry the same invitation after capacity changes.
 
-`createInvite` now creates a new invitation. A duplicate pending invitation produces `INVITATION_ALREADY_PENDING`. Use `resendInvite` to rotate its token. Use the returned invitation ID after a resend.
+Reducing the limit does not remove existing members. Repeated acceptance preserves the member's current role. A previously accepted invitation cannot restore a removed member.
 
-`listTeams`, `listMembers`, and `listPendingInvites` require `paginationOpts` and return `page`, `isDone`, and `continueCursor`. Request 1 to 100 rows per page. Team pages use membership order and can be empty during deletion cleanup. Continue until `isDone`, even after an empty page. The host can sort the returned teams for display. Member and invitation lists are separate. Use the `convex-helpers` pagination hook for a reactive host UI.
+## Paginated lists
 
-## Delivery
+`listTeams`, `listMembers`, and `listPendingInvites` accept `paginationOpts` and return `page`, `isDone`, and `continueCursor`. Request 1 to 100 items per page.
 
-[The delivery example](packages/example-backend/convex/delivery.ts) authenticates the actor in a host action. It calls an internal host mutation to issue the invitation, then sends the token from action memory to the provider.
+Pass `continueCursor` as the next request's `cursor` until `isDone` is true. Continue after an empty page too. Team pages can be empty during deletion cleanup. Team lists use membership order. Your app can sort the results for display.
 
-Never store or log the raw token. Never include it in scheduled arguments. To schedule delivery, schedule only the recipient and team information, then issue the token inside the action. Record only safe delivery metadata. The example catches provider errors and returns a fixed state without provider error text.
+## Invitation delivery
 
-A provider failure leaves the invitation available for explicit resend. If the provider succeeds but metadata recording fails, delivery is uncertain. Reconcile that state before sending another message. No exactly-once delivery guarantee is made.
+Your app sends invitation messages through its delivery provider. Create the invitation through an internal mutation, then send the returned token from a Convex action. See the [delivery example](https://github.com/clipinfit/convex-teams/blob/main/packages/example-backend/convex/delivery.ts).
+
+Keep raw tokens out of logs, app storage, and scheduled arguments. For scheduled delivery, schedule the recipient and team information, then create the token inside the action. Use `recordDeliveryAttempt` to record delivery status.
+
+A provider failure leaves the invitation available for explicit resend. If delivery succeeds but status recording fails, confirm the delivery state before sending again. Delivery does not have an exactly-once guarantee.
 
 ## Deletion and retention
 
-`deleteTeam` requires the owner. It immediately marks the team deleted, which denies access and invalidates its invitation grants. Cleanup removes memberships and repairs affected preferences in batches of 50. Each user gets a fallback they can access, or no workspace. Fallback repair checks saved preferences directly, then scans 25 memberships per transaction. It schedules another page if necessary. A null redirect can therefore be temporary while cleanup continues. A later explicit selection takes precedence over the background repair. The final cleanup removes the team record. Cleanup retries are safe.
+`deleteTeam` requires the owner. It immediately denies team access and invalidates invitation grants. Background cleanup removes memberships and repairs affected preferences. Each user gets another team they can access, or no team.
 
-The host must keep any content and subscription cleanup job in its own tables. Create that job in the same host mutation that requests deletion. Use the immutable `teamPublicId` as its reference. Teams does not cancel subscriptions or delete host content.
+A team preference can be temporarily null during cleanup. A later explicit selection takes precedence over background repair. Cleanup retries are safe.
 
-Call `pruneInvitations` from trusted host maintenance. The invite component expires pending records and removes terminal records after its 90-day retention period. Each call is bounded. The host must run enough batches for its invitation volume.
+Your app handles content deletion and subscription cancellation. Create a cleanup job in your own tables in the same mutation that calls `deleteTeam`. Reference the team by its immutable `teamPublicId`.
 
-The old `teamInvites` table and `pending_payment` schema value remain only for migration inspection. No invitation operation uses the old table. Old tokens cannot be accepted by the new lifecycle. Do not deploy over existing invitation data until migration or explicit revocation with reissue has been agreed. The payment activation API, generation permission, and fixed profile throttle have been removed.
+Call `pruneInvitations` from an internal maintenance function to expire pending invitations and remove invitation records that are no longer pending after the 90-day retention period. Each call processes a bounded batch. Run enough batches for your invitation volume.
 
 ## Errors and retries
 
-- `Not authorized.`: authenticate the correct actor or obtain the required membership. Do not retry unchanged.
-- `Team not found.`: the team is missing or deleted. Resolve another workspace.
-- `Team seat limit reached.`: update capacity or remove another member before retrying the same invitation.
-- `Membership no longer exists.`: obtain a new invitation. An accepted token cannot restore removed access.
-- `INVITATION_EXPIRED`, `INVITATION_REVOKED`, or `INVITATION_AUDIENCE_MISMATCH`: use the correct recipient or obtain a new invitation.
+| Error | What to do |
+| --- | --- |
+| `Not authorized.` | Authenticate the correct user or obtain the required role or membership. Do not retry unchanged. |
+| `Team not found.` | Select another team. The team is missing or deleted. |
+| `Could not allocate a unique team slug.` | Retry team creation. |
+| `Team seat limit reached.` | Increase capacity or remove another member before retrying the invitation. |
+| `Membership no longer exists.` | Obtain a new invitation. An accepted token cannot restore removed access. |
+| `INVITATION_ALREADY_PENDING` | Use `resendInvite` to resend the pending invitation. |
+| `INVITATION_EXPIRED` or `INVITATION_REVOKED` | Obtain a new invitation. |
+| `INVITATION_AUDIENCE_MISMATCH` | Sign in with the verified email of the intended recipient. |
+| `Membership count is not ready.` | For older teams, have the owner call `prepareMembershipCount` and wait for `ready`. |
 
-Convex handles transaction conflicts. Do not catch a membership-grant error and return success from a host acceptance mutation.
+Convex handles transaction conflicts. Let membership errors fail the acceptance mutation so the invitation and membership changes roll back together.
 
-See [the completion PRD](docs/prd-component-completion.md) for remaining work and [the Feedtwin migration map](docs/feedtwin-migration-map.md) for consumer constraints.
+## Migrate existing teams
 
-## Trusted imports
+If your app already stores teams, the import API can preserve their public IDs, names, slugs, and member roles. Use `importTeam`, `importMembers`, and `finishImport` from internal migration functions.
 
-`importTeam` preserves an existing public team ID and creates its owner. `importMembers` accepts batches of 1 to 100 memberships. `finishImport` checks ownership and the expected count before closing the import. These methods are for trusted internal migration jobs, not public user endpoints.
+Imports do not migrate invitations, preferences, billing, or app content. See the [migration guide](https://convex-teams.vercel.app/docs/host-contract#existing-data) for the import procedure and upgrade requirements.
 
-Keep membership writes paused and delay consumer cutover until all batches and access comparisons pass. Imported teams are active immediately; the component does not enforce the host migration freeze. Store the old-host-ID to component-ID mapping in the host. Keep project-only memberships, billing references, and content ownership in the host.
-
-Open batches are repeatable with identical roles. Conflicts fail the whole batch. Once complete, skip batch replay. Durable receipts prevent a completed import from restoring removed members or recreating a deleted team. Retain the source snapshot and receipts. Imports do not migrate preferences, invitations, or source timestamps. See the [migration contract](https://convex-teams.vercel.app/docs/host-contract).
-
-`getTeamState(ctx, teamPublicId)` is a trusted host lookup of current workspace metadata. Missing or deleted teams return null. A returned record is not an access grant. The host must apply its membership or resource-specific permission rules.
+See the [changelog](CHANGELOG.md) for release history.
