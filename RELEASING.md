@@ -1,74 +1,41 @@
-# Release convex-teams
+# Releasing
 
-The first stable target is `1.0.0`, preceded by `1.0.0-rc.0` under the `next` tag. Keep unfinished APIs on a prerelease tag. Move `latest` only after the component and consumer validation plan passes. After 1.0, incompatible API or documented authorization changes require a major version; compatible additions require a minor version and compatible fixes require a patch.
+## Verify the package
 
-The first name-claim publication received both `development` and `latest` from npm. The registry rejected removal of `latest` with HTTP 400. This describes the historical name claim. Stable publication replaces `latest` with the runtime package.
-
-During `0.x`, use a minor version for incompatible API or schema changes. Use a patch version for compatible fixes. Record every user-visible change in `CHANGELOG.md`. Bump once for each published artifact, not for each checkpoint commit.
-
-## Create checkpoints
-
-Commit a coherent change after its checks pass. Use a short conventional commit message. Push checkpoints to GitHub. Do not use version tags for unfinished checkpoints.
-
-## Package identity
-
-Publish only `@clipin/convex-teams` under the existing npm organization `clipin`. Verify account access with `npm org ls clipin`. The GitHub owner remains `clipinfit`.
-
-The unscoped `convex-teams` artifacts are historical. Do not publish a new unscoped version. Retire those artifacts after the scoped replacement is verified.
-
-## Publish a component prerelease
-
-1. Use published dependencies without local patches. Teams now uses the corrected `convex-invite@0.1.1` release.
-2. Complete the required PRD tests, the consumer rehearsal, and a clean packed installation.
-3. Update `CHANGELOG.md`. For a subsequent alpha, run `bun run version:alpha`. Review `packages/convex-teams/package.json` and the root `bun.lock`.
-4. Run the checks below. Commit and push the release candidate.
-5. From `packages/convex-teams`, publish release candidates with `npm publish --tag next --access public`. Use `alpha` only for alpha versions.
-6. Verify the registry version and integrity. Tag that exact commit as `v<version>` and push the tag.
+Run these commands from the repository root:
 
 ```sh
 bun install --frozen-lockfile
 bun run typecheck
 bun run lint
+bun run check:links
 bun run test
 bun run build
 bun run pack:check
 bun run pack:smoke
 ```
 
-`prepublishOnly` rejects the source package while it has a dependency patch or uncommitted changes. This guard is only a mechanical check. It does not establish consumer readiness. Do not bypass it to publish the component.
+The smoke check installs the package archive in a temporary npm project. It checks exported types, test registration, component mounting, invitation pagination, and acceptance rollback on a local Convex backend. It requires Node.js, npm, and access to download the Convex backend. The temporary project is retained for inspection.
 
-Published versions are immutable. Prepare a new version to correct a published artifact. See [npm's publication rules](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
+Review the package contents and changelog. Confirm that CI passes for the commit you intend to publish. Keep credentials, personal data, invitation tokens, and local build output out of the package.
 
-## Verify an installed component
+## Publish to npm
 
-Run `bun run pack:smoke` to build the package and install its archive in a fresh temporary npm project. The check validates exported types, the test registration helper, the mounted component tree, invitation pagination, and acceptance rollback on a local Convex backend. It requires Node.js, npm, and access to download the Convex backend. The temporary project is retained for inspection.
+1. Update the version in `packages/convex-teams/package.json` and both changelogs. Update the lockfile with `bun install --lockfile-only`.
+2. Keep the package README, licence, and notices synchronized with the root copies.
+3. Run the verification commands above. Commit the changes and wait for CI to pass.
+4. Run `npm whoami` with an account that can publish under `@clipin`.
+5. In `packages/convex-teams`, run `npm pack --dry-run` and inspect the file list.
+6. Run `npm publish --access public` and complete npm authentication.
+7. Install the exact version in a fresh Convex application. Verify the client, component configuration, generated types, and test helper.
+8. Tag the source commit as `v<VERSION>` and create the GitHub release with its changelog entry.
 
-The registry-only check uses the published `convex-invite@0.1.1` dependency. To evaluate a future unpublished invite correction, pass an archive whose version satisfies the teams dependency:
+The repository root is private. Publish only from `packages/convex-teams`. The `prepublishOnly` check rejects workspace dependency patches and uncommitted changes.
 
-```sh
-bun run pack:smoke /absolute/path/convex-invite-candidate.tgz
-```
+Use a major version for incompatible API or documented authorization changes. Use a minor version for compatible additions and a patch version for compatible fixes. Each published artifact requires a new version.
 
-A candidate result validates that archive only. Before publication, run `bun run pack:smoke` without an argument. A local candidate does not satisfy this release gate.
+## Deploy the website
 
-## Monorepo package boundaries
+Use `apps/web` as the project root. Enable access to workspace files outside that directory. Install with `bun install --frozen-lockfile` and build with `bun run build`.
 
-The repository root is private. Publish only from `packages/convex-teams`. Keep its `CHANGELOG.md` and `LICENSE` synchronized with the root copies before a release. The package README uses GitHub links so they also work on npm.
-
-The invite development patch was removed after `convex-invite@0.1.1` was published. The component publication guard still rejects workspace dependency patches and uncommitted changes. Website deployments do not publish an npm package.
-
-## First stable promotion
-
-The unscoped `convex-teams@1.0.0-rc.0` candidate passed registry validation. After the organization rename, repeat packed installation and consumer checks for `@clipin/convex-teams@1.0.0`. Verify the scoped registry version after publication with the commands below.
-
-After those checks pass, set the version to `1.0.0`, update documentation and both changelogs, and repeat the final build and package checks. Publish with `npm publish --tag latest --access public`. Verify integrity and tags before creating the matching Git tag and GitHub release. Publication does not perform a consumer production cutover.
-
-To test a registry release instead of a local archive:
-
-```sh
-TEAMS_RELEASE_VERSION=1.0.0 bun run pack:smoke
-TEAMS_RELEASE_VERSION=1.0.0 node scripts/rehearse-consumer.mjs pedalclass
-TEAMS_RELEASE_VERSION=1.0.0 node scripts/rehearse-consumer.mjs feedtwin
-```
-
-Use the exact version under verification. The scripts reject version ranges.
+The website requires no backend credentials. Verify navigation, search, and installation examples after deployment.

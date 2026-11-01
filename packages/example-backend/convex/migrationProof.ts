@@ -18,7 +18,7 @@ export const setup = internalMutation({
     const runId = crypto.randomUUID();
     for (let i = 0; i < 2; i++) {
       const suffix = crypto.randomUUID();
-      const teamPublicId = `feedtwin-${suffix}`;
+      const teamPublicId = `import-${suffix}`;
       const sourceId = await ctx.db.insert("migrationSources", {
         teamPublicId,
         teamSlug: `migration-${suffix}`,
@@ -129,7 +129,7 @@ export const verify = internalQuery({
         throw new Error("Team role changed.");
       if (newMember && newMember.teamId !== mapping.componentTeamId)
         throw new Error("Team mapping changed.");
-      // Feedtwin permits project-only read access without team membership.
+      // The example permits project-only read access without team membership.
       const before =
         Boolean(oldMember) || subject === project.projectOnlyUserId;
       const after = Boolean(newMember) || subject === project.projectOnlyUserId;

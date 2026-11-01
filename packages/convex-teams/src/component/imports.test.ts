@@ -11,9 +11,9 @@ function setup() {
   return t;
 }
 const snapshot = {
-  teamPublicId: "feedtwin-stable",
-  teamSlug: "feedtwin",
-  teamName: "Feedtwin",
+  teamPublicId: "import-stable",
+  teamSlug: "import-example",
+  teamName: "Import example",
   ownerUserId: "owner",
   personal: false,
   expectedMemberCount: 202,

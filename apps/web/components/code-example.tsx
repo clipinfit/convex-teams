@@ -57,7 +57,7 @@ export function CodeExample() {
         <code>{examples[tab]}</code>
       </pre>
       <div className="code-caption">
-        <span>TypeScript · Development API</span>
+        <span>TypeScript · Teams API</span>
         <span role="status">
           {failed
             ? "Select the code to copy it."

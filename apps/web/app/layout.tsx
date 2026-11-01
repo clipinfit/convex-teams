@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: "%s · convex-teams",
   },
   description:
-    "Workspace membership, ownership, and invitations for Convex. Open source, with invitations powered by convex-invite.",
+    "Workspace membership, ownership, and invitations for Convex. Open source under Apache-2.0.",
 };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  GitBranch,
-  Users,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Users } from "lucide-react";
 import Link from "next/link";
 import { CodeExample } from "@/components/code-example";
 
@@ -21,9 +15,6 @@ export default function Home() {
         </Link>
         <nav aria-label="Main navigation">
           <Link href="/docs">Docs</Link>
-          <Link href="/docs/release-status" className="nav-status">
-            Release status
-          </Link>
           <a href={github}>
             GitHub <ArrowUpRight size={14} />
           </a>
@@ -32,10 +23,6 @@ export default function Home() {
       <main>
         <section className="hero">
           <div className="hero-copy">
-            <Link href="/docs/release-status" className="release-pill">
-              <span />
-              Version 1.0.0 is available <ArrowRight size={13} />
-            </Link>
             <p className="eyebrow">OPEN SOURCE / CONVEX COMPONENT</p>
             <h1>
               A place for
@@ -105,13 +92,6 @@ export default function Home() {
                 operation
               </div>
             </div>
-            <div className="integration-line">
-              <span className="connector" />
-              <span>
-                Invitations powered by <strong>convex-invite</strong>
-              </span>
-              <GitBranch size={16} />
-            </div>
           </div>
         </section>
         <div className="principles-strip">
@@ -129,8 +109,8 @@ export default function Home() {
               in one place.
             </h2>
             <p>
-              Mount teams once. The invitation component mounts with it. Use
-              typed methods from your authenticated Convex functions.
+              Mount teams once to manage workspaces and invitations. Use typed
+              methods from your authenticated Convex functions.
             </p>
             <Link href="/docs/getting-started" className="text-link">
               Try the local example <ArrowRight size={16} />
@@ -159,8 +139,8 @@ export default function Home() {
               <span className="number">02</span>
               <h3>Invitations</h3>
               <p>
-                Tokens, expiry, resend, and revocation come from convex-invite.
-                Acceptance and membership grants share one transaction.
+                Manage tokens, expiry, resend, and revocation. Acceptance and
+                membership grants share one transaction.
               </p>
               <Link href="/docs/invitations">
                 Invitation lifecycle <ArrowRight size={15} />
@@ -180,18 +160,17 @@ export default function Home() {
             </article>
           </div>
         </section>
-        <section className="release-section">
+        <section className="getting-started-section">
           <div>
-            <p className="eyebrow">DEVELOPED IN THE OPEN</p>
-            <h2>Use the first stable release.</h2>
+            <p className="eyebrow">ADD TEAMS TO YOUR APP</p>
+            <h2>Set up your first workspace.</h2>
             <p>
-              The published candidate passed clean installation and consumer
-              checks. Read the release evidence and the host integration
-              requirements.
+              Install the component, mount it in your Convex app, and connect
+              your authenticated functions.
             </p>
           </div>
-          <Link href="/docs/release-status" className="button primary">
-            View release status <ArrowRight size={17} />
+          <Link href="/docs/getting-started" className="button primary">
+            Get started <ArrowRight size={17} />
           </Link>
         </section>
       </main>

@@ -12,10 +12,7 @@ export function baseOptions(): BaseLayoutProps {
         </span>
       ),
     },
-    links: [
-      { text: "Documentation", url: "/docs", active: "nested-url" },
-      { text: "Release status", url: "/docs/release-status" },
-    ],
+    links: [{ text: "Documentation", url: "/docs", active: "nested-url" }],
     githubUrl: "https://github.com/clipinfit/convex-teams",
   };
 }

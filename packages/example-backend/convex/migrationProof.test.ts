@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { components, internal } from "./_generated/api.js";
 import schema from "./schema.js";
 
-test("Feedtwin fixture preserves IDs, billing references, ownership and project-only access across retries", async () => {
+test("Import fixture preserves IDs, billing references, ownership and project-only access across retries", async () => {
   const t = convexTest(schema, import.meta.glob("./**/*.ts"));
   register(t);
   expect(await t.action(internal.migrationProof.run, {})).toEqual({

@@ -6,7 +6,6 @@
     "workspaces",
     "invitations",
     "host-contract",
-    "api",
-    "release-status"
+    "api"
   ]
 }
